@@ -1,3 +1,10 @@
+#TODO OPTI les redondances de code
+#TODO Q4
+#TODO trouver k0 et k1 optis
+#TODO trouver des explications formelles aux résultats pour TODO le rapport
+#TODO meilleur smooth que loess?
+
+
 install.packages("gdata")
 library(gdata) 
 
@@ -125,11 +132,162 @@ for (i in seq2){
 
 
 #3) Courbe haute + courbe basse à 95%
+seq1 <- 0:4
+#les 75 premiers puits
+seq2 <- 1:75
+
+plotGood <- TRUE
+plotMed <- TRUE
+plotBad <- TRUE
+
+par(mfrow=c(2,2))
+for (i in seq2){
+  
+  
+  
+  mois <- 1:35
+  v <- as.vector(tdata[,i])
+  
+  v2 <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v2 %in% 0)
+  v2 <- v2[v2 != 0]
+  mois <- mois[!mois %in%  nd]
+  
+  k0=0.5
+  k1=0.1
+  y=k0*exp(-k1*mois)
+  
+  set.seed(1234)
+  df <- data.frame(x = y,
+                   y = v2)
+  
+  expfit <- lm(v2 ~ y)
+  #pred = predict(expfit)
+  
+  #pred2<-plot_fit(expfit)#,focal_var = "C",inter_var = "N")
+  newx <- seq(min(df$x), max(df$x), length.out=35)
+  
+  pred <- predict(expfit)#, newdata = data.frame(x=newx), interval = 'confidence')
+  
+  ci <- confint(expfit)
+  
+  
+  col="black"
+  if (v[36] == "Good" && plotGood == TRUE){
+    col = "red"
+    plotGood = FALSE
+    plot(mois,pred,type="l",col=col, 
+         ylab="gas prod", main="IC courbe de qualité good",
+         ylim=c(0,max(pred)+10))#, data = df)
+    
+    arrows(y,ci[,1],y,ci[,2], code=3, angle=90, length=0.05)
+    #lines(newx, pred[ ,3], lty = 'dashed', col = 'red')
+    #lines(newx, pred[ ,2], lty = 'dashed', col = 'red')
+    
+  }else if (v[36] == "medium" && plotMed == TRUE){
+    col = "green"
+    plotMed = FALSE
+    plot(mois,pred,type="l",col=col, ylab="gas prod", 
+         main="IC courbe de qualité medium",
+         ylim=c(0,max(pred)+10))#,data = df)
+    #matlines(y, pred[, c("lwr")], col = "orange")
+    #matlines(y, pred[, c("upr")], col = "purple")
+  }else if (v[36] == "bad" && plotBad == TRUE){
+    col = "blue"
+    plotBad = FALSE
+    plot(mois,pred,type="l",col=col, ylab="gas prod", 
+         main="IC courbe de qualité bad",
+         ylim=c(0,max(predict(expfit))+10))#, data = df)
+    #matlines(y, pred[, c("lwr")], col = "orange")
+    #matlines(y, pred[, c("upr")], col = "purple")
+  }
+  
+}
+
+
 
 
 
 #4) Suggestions sur 5 courbes mal classées
+#certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
 
 #5) Gestion des spikes (smoothing curves)
+
+#polynomial de degré 3
+for (i in seq2){
+  
+  #l'abscisse
+  mois <- 1:35
+  
+  #on récupère les données du puits i
+  v <- as.vector(tdata[,i])
+  
+  #la couleur en fonction de la classification de qualité
+  col="black"
+  if (v[36] == "Good"){
+    col = "red"
+  }else if (v[36] == "medium"){
+    col = "green"
+  }else 
+    col = "blue"
+  
+  v <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+
+  smooth <- loess(v~mois)
+  fit3 <- lm(smooth$fitted ~ poly(mois, 3, raw=TRUE))
+  
+  if (i==1){
+    plot(mois, predict(fit3), type="l",col=col, ylab="gas prod", lwd=1, main="Régression polynomiale de degré 3 avec smooth ", ylim=c(0,max(predict(fit3))+10))
+  }else {
+    lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
+  } 
+}
+
+#exponentiel
+par(mfrow=c(1,1))
+for (i in seq2){
+  
+  mois <- 1:35
+  v <- as.vector(tdata[,i])
+  
+  col="black"
+  if (v[36] == "Good"){
+    col = "red"
+  }else if (v[36] == "medium"){
+    col = "green"
+  }else 
+    col = "blue"
+  
+  v <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  
+  smooth <- loess(v~mois)
+  
+  k0=0.5
+  k1=0.1
+  y=k0*exp(-k1*mois)
+  expfit <- lm(smooth$fitted ~ y)
+  
+  #tracé de la figure 1 : les données de production
+  if (i==1){
+    plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
+    #axis(side=2, at=seq(0, 700, by=100))
+    #box()
+  }else {
+    lines(mois,predict(expfit),type="l",col=col) 
+  } 
+  
+}
 
 
