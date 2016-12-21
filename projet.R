@@ -6,6 +6,8 @@
 
 
 install.packages("gdata")
+install.packages("nls2")
+library(nls2)
 library(gdata) 
 
 #TODO en relatif le chemin du répertoire du projet
@@ -130,8 +132,17 @@ for (i in seq2){
  
 }
 
+#Est-ce que cela marche ? avez-vous d'autres idées ?
+#pas trop mal je dirai
+#pas d'autres idées -> demander aux maths
 
 #3) Courbe haute + courbe basse à 95%
+
+#j'y arrive pas...
+# il faut utiliser nls probablement pour les regression non lineaires 
+# revoir les parametres k0 et k1 : les changer!!
+#https://www.r-bloggers.com/first-steps-with-non-linear-regression-in-r/
+
 seq1 <- 0:4
 #les 75 premiers puits
 seq2 <- 1:75
@@ -143,75 +154,127 @@ plotBad <- TRUE
 par(mfrow=c(2,2))
 for (i in seq2){
   
-  
-  
   mois <- 1:35
   v <- as.vector(tdata[,i])
   
   v2 <- as.numeric(v[1:35])
   
   #on plot pas les 0 qui sont des ND (d'apres moi)
-  nd <- which(v2 %in% 0)
-  v2 <- v2[v2 != 0]
-  mois <- mois[!mois %in%  nd]
+  #nd <- which(v2 %in% 0)
+  #v2 <- v2[v2 != 0]
+  x <- mois#[!mois %in%  nd]
   
   k0=0.5
   k1=0.1
-  y=k0*exp(-k1*mois)
   
-  set.seed(1234)
-  df <- data.frame(x = y,
-                   y = v2)
+  y=k0*exp(-k1*x)
+  y2 <- log(y)
   
-  expfit <- lm(v2 ~ y)
+  expfit <- lm(v2 ~ x2)
   #pred = predict(expfit)
-  
   #pred2<-plot_fit(expfit)#,focal_var = "C",inter_var = "N")
-  newx <- seq(min(df$x), max(df$x), length.out=35)
   
-  pred <- predict(expfit)#, newdata = data.frame(x=newx), interval = 'confidence')
+
   
-  ci <- confint(expfit)
+  pred <- predict(expfit)
   
+  #ci <- confint(expfit)
+  
+  #y2 <- log(y)
+  #model <- lm(v2 ~ y2)##
+  
+  
+  #param <- summary(model)$coefficients[, 1] 
+  #se <- summary(model)$coefficients[, 2]
+  
+  #ddl <- 35 -2
+  #uc <- param + qt(0.975, ddl) * se
+  #lc <- param - qt(0.975, ddl) * se
+
   
   col="black"
   if (v[36] == "Good" && plotGood == TRUE){
+    
+    a_start<-400
+    b_start<-2*log(2)/a_start
+    
+    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
+    
+    preds <- predict(m, interval = "prediction")
+    
+    
     col = "red"
     plotGood = FALSE
     plot(mois,pred,type="l",col=col, 
          ylab="gas prod", main="IC courbe de qualité good",
          ylim=c(0,max(pred)+10))#, data = df)
     
-    arrows(y,ci[,1],y,ci[,2], code=3, angle=90, length=0.05)
+    
+    lines(x,preds,lty=2,lwd=3)
+    print(cor(v2,preds))
+    
+    
     #lines(newx, pred[ ,3], lty = 'dashed', col = 'red')
     #lines(newx, pred[ ,2], lty = 'dashed', col = 'red')
     
   }else if (v[36] == "medium" && plotMed == TRUE){
+    
+    
+    a_start<-120
+    b_start<-2*log(2)/a_start
+    
+    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
+    
+    preds <- predict(m, interval = "prediction")
+    
+    
     col = "green"
     plotMed = FALSE
     plot(mois,pred,type="l",col=col, ylab="gas prod", 
          main="IC courbe de qualité medium",
          ylim=c(0,max(pred)+10))#,data = df)
+    
+    
+    lines(x,preds,lty=2,lwd=3)
+    print(cor(v2,preds))
+    
+    
     #matlines(y, pred[, c("lwr")], col = "orange")
     #matlines(y, pred[, c("upr")], col = "purple")
   }else if (v[36] == "bad" && plotBad == TRUE){
+    
+    
+    a_start<-40
+    b_start<-10*log(10)/a_start
+    
+    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
+    
+    preds <- predict(m, interval = "prediction")
+    
+    
     col = "blue"
     plotBad = FALSE
     plot(mois,pred,type="l",col=col, ylab="gas prod", 
          main="IC courbe de qualité bad",
          ylim=c(0,max(predict(expfit))+10))#, data = df)
+    
+    lines(x,preds,lty=2,lwd=3)
+    
+    print(cor(v2,preds))
+    
+    
     #matlines(y, pred[, c("lwr")], col = "orange")
     #matlines(y, pred[, c("upr")], col = "purple")
   }
-  
 }
-
 
 
 
 
 #4) Suggestions sur 5 courbes mal classées
 #certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
+
+
 
 #5) Gestion des spikes (smoothing curves)
 
@@ -290,4 +353,121 @@ for (i in seq2){
   
 }
 
+
+###################################
+#Pour la question 3
+
+predictNLS <- function(
+  object, 
+  newdata,
+  level = 0.95, 
+  nsim = 10000,
+  ...
+)
+{
+  require(MASS, quietly = TRUE)
+  
+  ## get right-hand side of formula
+  RHS <- as.list(object$call$formula)[[3]]
+  EXPR <- as.expression(RHS)
+  
+  ## all variables in model
+  VARS <- all.vars(EXPR)
+  
+  ## coefficients
+  COEF <- coef(object)
+  
+  ## extract predictor variable    
+  predNAME <- setdiff(VARS, names(COEF))  
+  
+  ## take fitted values, if 'newdata' is missing
+  if (missing(newdata)) {
+    newdata <- eval(object$data)[predNAME]
+    colnames(newdata) <- predNAME
+  }
+  
+  ## check that 'newdata' has same name as predVAR
+  if (names(newdata)[1] != predNAME) stop("newdata should have name '", predNAME, "'!")
+  
+  ## get parameter coefficients
+  COEF <- coef(object)
+  
+  ## get variance-covariance matrix
+  VCOV <- vcov(object)
+  
+  ## augment variance-covariance matrix for 'mvrnorm' 
+  ## by adding a column/row for 'error in x'
+  NCOL <- ncol(VCOV)
+  ADD1 <- c(rep(0, NCOL))
+  ADD1 <- matrix(ADD1, ncol = 1)
+  colnames(ADD1) <- predNAME
+  VCOV <- cbind(VCOV, ADD1)
+  ADD2 <- c(rep(0, NCOL + 1))
+  ADD2 <- matrix(ADD2, nrow = 1)
+  rownames(ADD2) <- predNAME
+  VCOV <- rbind(VCOV, ADD2) 
+  
+  ## iterate over all entries in 'newdata' as in usual 'predict.' functions
+  NR <- nrow(newdata)
+  respVEC <- numeric(NR)
+  seVEC <- numeric(NR)
+  varPLACE <- ncol(VCOV)   
+  
+  ## define counter function
+  counter <- function (i) 
+  {
+    if (i%%10 == 0) 
+      cat(i)
+    else cat(".")
+    if (i%%50 == 0) 
+      cat("\n")
+    flush.console()
+  }
+  
+  outMAT <- NULL 
+  
+  for (i in 1:NR) {
+    counter(i)
+    
+    ## get predictor values and optional errors
+    predVAL <- newdata[i, 1]
+    if (ncol(newdata) == 2) predERROR <- newdata[i, 2] else predERROR <- 0
+    names(predVAL) <- predNAME  
+    names(predERROR) <- predNAME  
+    
+    ## create mean vector for 'mvrnorm'
+    MU <- c(COEF, predVAL)
+    
+    ## create variance-covariance matrix for 'mvrnorm'
+    ## by putting error^2 in lower-right position of VCOV
+    newVCOV <- VCOV
+    newVCOV[varPLACE, varPLACE] <- predERROR^2
+    
+    ## create MC simulation matrix
+    simMAT <- mvrnorm(n = nsim, mu = MU, Sigma = newVCOV, empirical = TRUE)
+    
+    ## evaluate expression on rows of simMAT
+    EVAL <- try(eval(EXPR, envir = as.data.frame(simMAT)), silent = TRUE)
+    if (inherits(EVAL, "try-error")) stop("There was an error evaluating the simulations!")
+    
+    ## collect statistics
+    PRED <- data.frame(predVAL)
+    colnames(PRED) <- predNAME   
+    FITTED <- predict(object, newdata = data.frame(PRED))
+    MEAN.sim <- mean(EVAL, na.rm = TRUE)
+    SD.sim <- sd(EVAL, na.rm = TRUE)
+    MEDIAN.sim <- median(EVAL, na.rm = TRUE)
+    MAD.sim <- mad(EVAL, na.rm = TRUE)
+    QUANT <- quantile(EVAL, c((1 - level)/2, level + (1 - level)/2))
+    RES <- c(FITTED, MEAN.sim, SD.sim, MEDIAN.sim, MAD.sim, QUANT[1], QUANT[2])
+    outMAT <- rbind(outMAT, RES)
+  }
+  
+  colnames(outMAT) <- c("fit", "mean", "sd", "median", "mad", names(QUANT[1]), names(QUANT[2]))
+  rownames(outMAT) <- NULL
+  
+  cat("\n")
+  
+  return(outMAT)  
+}
 
