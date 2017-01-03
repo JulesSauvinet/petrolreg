@@ -11,7 +11,7 @@ library(nls2)
 library(gdata) 
 
 #TODO en relatif le chemin du répertoire du projet
-setwd("R/projet")
+setwd("..\\..\\Projects\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL
@@ -170,26 +170,10 @@ for (i in seq2){
   y=k0*exp(-k1*x)
   y2 <- log(y)
   
-  expfit <- lm(v2 ~ x2)
-  #pred = predict(expfit)
-  #pred2<-plot_fit(expfit)#,focal_var = "C",inter_var = "N")
-  
-
+  expfit <- lm(v2 ~ y2)
   
   pred <- predict(expfit)
   
-  #ci <- confint(expfit)
-  
-  #y2 <- log(y)
-  #model <- lm(v2 ~ y2)##
-  
-  
-  #param <- summary(model)$coefficients[, 1] 
-  #se <- summary(model)$coefficients[, 2]
-  
-  #ddl <- 35 -2
-  #uc <- param + qt(0.975, ddl) * se
-  #lc <- param - qt(0.975, ddl) * se
 
   
   col="black"
@@ -213,10 +197,6 @@ for (i in seq2){
     lines(x,preds,lty=2,lwd=3)
     print(cor(v2,preds))
     
-    
-    #lines(newx, pred[ ,3], lty = 'dashed', col = 'red')
-    #lines(newx, pred[ ,2], lty = 'dashed', col = 'red')
-    
   }else if (v[36] == "medium" && plotMed == TRUE){
     
     
@@ -238,9 +218,6 @@ for (i in seq2){
     lines(x,preds,lty=2,lwd=3)
     print(cor(v2,preds))
     
-    
-    #matlines(y, pred[, c("lwr")], col = "orange")
-    #matlines(y, pred[, c("upr")], col = "purple")
   }else if (v[36] == "bad" && plotBad == TRUE){
     
     
@@ -262,9 +239,6 @@ for (i in seq2){
     
     print(cor(v2,preds))
     
-    
-    #matlines(y, pred[, c("lwr")], col = "orange")
-    #matlines(y, pred[, c("upr")], col = "purple")
   }
 }
 
