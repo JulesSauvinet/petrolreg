@@ -73,9 +73,9 @@ for (j in seq1){
         plot(mois,v,type="l",col=col, ylab="gas prod", main="Les courbes non fittées",ylim=c(0,max(v)+10))
         #axis(side=2, at=seq(0, 700, by=100))
         #box()
-      }else {
-        lines(mois,v,type="l",col=col) 
-      } 
+      }
+      lines(mois,v,type="l",col=col) 
+
     }
     #tracé de la figure 2 : les courbes de production obtenues avec des polynômes de degré 2 (et 0, 1, 3, 4)
     else{
@@ -83,9 +83,8 @@ for (j in seq1){
       #summary(fit2)
       if (i==1){
         plot(mois, predict(fit2), type="l",col=col, ylab="gas prod", lwd=1, main=paste("Régression polynomiale de degré ",j), ylim=c(0,max(predict(fit2))+10))
-      }else {
-        lines(mois, predict(fit2), col=col, ylab="gas prod", lwd=1)
-      } 
+      }
+      lines(mois, predict(fit2), col=col, ylab="gas prod", lwd=1)
     }
   }
 }
@@ -126,9 +125,8 @@ for (i in seq2){
     plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
     #axis(side=2, at=seq(0, 700, by=100))
     #box()
-  }else {
-    lines(mois,predict(expfit),type="l",col=col) 
-  } 
+  }
+  lines(mois,predict(expfit),type="l",col=col)
  
 }
 
@@ -159,14 +157,14 @@ for (i in seq2){
   df <- data.frame(mois, v)
   df$lv <- log(df$v)
   
-  k0start=0.5
-  k1start=0.1
+  k0start=5
+  k1start=0.01
   
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
   if (i==1){
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
   }
   lines(df$mois,exp(predict(m)),type="l",col=col)
 }
@@ -323,9 +321,9 @@ for (i in seq2){
   
   if (i==1){
     plot(mois, predict(fit3), type="l",col=col, ylab="gas prod", lwd=1, main="Régression polynomiale de degré 3 avec smooth ", ylim=c(0,max(predict(fit3))+10))
-  }else {
-    lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
-  } 
+  }
+  lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
+
 }
 
 #exponentiel
@@ -362,9 +360,8 @@ for (i in seq2){
     plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
     #axis(side=2, at=seq(0, 700, by=100))
     #box()
-  }else {
-    lines(mois,predict(expfit),type="l",col=col) 
-  } 
+  }
+  lines(mois,predict(expfit),type="l",col=col)
   
 }
 
