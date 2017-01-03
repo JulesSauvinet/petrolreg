@@ -132,6 +132,47 @@ for (i in seq2){
  
 }
 
+
+#----------------------------------------------------------
+
+# Tentative avec nls
+par(mfrow=c(1,1))
+for (i in seq2){
+  mois <- 1:35
+  v <- as.vector(tdata[,i])
+  
+  col="black"
+  if (v[36] == "Good"){
+    col = "red"
+  }else if (v[36] == "medium"){
+    col = "green"
+  }else {
+    col = "blue"
+  }
+  
+  v <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  df <- data.frame(mois, v)
+  df$lv <- log(df$v)
+  
+  k0start=0.5
+  k1start=0.1
+  
+  m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
+  summary(m)
+  
+  if (i==1){
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+  }
+  lines(df$mois,exp(predict(m)),type="l",col=col)
+}
+#----------------------------------------------------------
+
+
 #Est-ce que cela marche ? avez-vous d'autres idées ?
 #pas trop mal je dirai
 #pas d'autres idées -> demander aux maths
