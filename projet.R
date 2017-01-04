@@ -10,22 +10,20 @@ install.packages("nls2")
 library(nls2)
 library(gdata) 
 
-#TODO en relatif le chemin du répertoire du projet
-setwd("..\\..\\Projects\\petrolreg")
+#setwd("..\\..\\Projects\\petrolreg")
 getwd()
 
-#récupération des données du fichier EXCEL
-#il faut avoir perl d'installé
-datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
+#récupération des données du fichier EXCEL, il faut avoir perl d'installé
+perl <- 'C:\\Strawberry\\perl\\bin\\perl.exe'
+datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
 datapuits
 
 #on transpose les données pour avoir les puits en colonne et les mois en ligne
 tdata = setNames(data.frame(t(datapuits[,-1])), datapuits[,1])
 tdata
 
-#1) On obtient pas les meme courbes que le prof (bizarre, ça doit venir du traitement des données, j'ai obtenu 
-# un truc similaire a un moment donnée mais je sais plus comment - et en meme temps c'est WAHL donc 
-# on a peut etre raison nous)
+#1) On obtient pas les meme courbes que le prof (bizarre, ça doit venir du traitement des données - 
+#et en meme temps c'est WAHL donc on a peut etre raison nous)
 
 par(mfrow=c(2,3))
 #on va tracer 5 graphiques
@@ -55,24 +53,13 @@ for (j in seq1){
     
     #on plot pas les 0 qui sont des ND (d'apres moi)
     nd <- which(v %in% 0)
-    #print('V AVANT')
-    #print(v)
     v <- v[v != 0]
-    #print('V APRES')
-    #print(v)
-
-    #print('MOIS AVANT')    
-    #print(mois)
     mois <- mois[!mois %in%  nd]
-    #print('MOIS APRES')    
-    #print(mois)
     
     #tracé de la figure 1 : les données de production
     if (j==0){
       if (i==1){
         plot(mois,v,type="l",col=col, ylab="gas prod", main="Les courbes non fittées",ylim=c(0,max(v)+10))
-        #axis(side=2, at=seq(0, 700, by=100))
-        #box()
       }
       lines(mois,v,type="l",col=col) 
 
@@ -80,7 +67,6 @@ for (j in seq1){
     #tracé de la figure 2 : les courbes de production obtenues avec des polynômes de degré 2 (et 0, 1, 3, 4)
     else{
       fit2 <- lm(v ~ poly(mois, j, raw=TRUE))
-      #summary(fit2)
       if (i==1){
         plot(mois, predict(fit2), type="l",col=col, ylab="gas prod", lwd=1, main=paste("Régression polynomiale de degré ",j), ylim=c(0,max(predict(fit2))+10))
       }
@@ -94,6 +80,10 @@ for (j in seq1){
 #valeur pas trop mal avec k0=0.5 et k1=0.1
 #k0 fait fluctuer la valeur de départ notamment (plus k0 est grand, plus les courbes sont hautes au départ)
 #k1 aplatit les courbes 0.1 (TODO expliquer tout ça)
+
+#----------------------------------------------------------
+
+# Tentative avec lm
 par(mfrow=c(1,1))
 for (i in seq2){
   
@@ -118,18 +108,16 @@ for (i in seq2){
   k0=0.5
   k1=0.1
   y=k0*exp(-k1*mois)
+  #v=log(v)#y=log(y)
   expfit <- lm(v ~ y)
   
   #tracé de la figure 1 : les données de production
   if (i==1){
     plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
-    #axis(side=2, at=seq(0, 700, by=100))
-    #box()
   }
   lines(mois,predict(expfit),type="l",col=col)
- 
 }
-
+#----------------------------------------------------------
 
 #----------------------------------------------------------
 
@@ -157,7 +145,7 @@ for (i in seq2){
   df <- data.frame(mois, v)
   df$lv <- log(df$v)
   
-  k0start=5
+  k0start=400
   k1start=0.01
   
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
@@ -170,15 +158,13 @@ for (i in seq2){
 }
 #----------------------------------------------------------
 
-
 #Est-ce que cela marche ? avez-vous d'autres idées ?
 #pas trop mal je dirai
 #pas d'autres idées -> demander aux maths
 
+
 #3) Courbe haute + courbe basse à 95%
 
-#j'y arrive pas...
-# il faut utiliser nls probablement pour les regression non lineaires 
 # revoir les parametres k0 et k1 : les changer!!
 #https://www.r-bloggers.com/first-steps-with-non-linear-regression-in-r/
 
@@ -192,95 +178,65 @@ plotBad <- TRUE
 
 par(mfrow=c(2,2))
 for (i in seq2){
-  
   mois <- 1:35
   v <- as.vector(tdata[,i])
+  classif = v[36]
   
-  v2 <- as.numeric(v[1:35])
+  v <- as.numeric(v[1:35])
   
   #on plot pas les 0 qui sont des ND (d'apres moi)
-  #nd <- which(v2 %in% 0)
-  #v2 <- v2[v2 != 0]
-  x <- mois#[!mois %in%  nd]
-  
-  k0=0.5
-  k1=0.1
-  
-  y=k0*exp(-k1*x)
-  y2 <- log(y)
-  
-  expfit <- lm(v2 ~ y2)
-  
-  pred <- predict(expfit)
-  
-
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  df <- data.frame(mois, v)
+  df$lv <- log(df$v)
   
   col="black"
-  if (v[36] == "Good" && plotGood == TRUE){
-    
-    a_start<-400
-    b_start<-2*log(2)/a_start
-    
-    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
-    
-    preds <- predict(m, interval = "prediction")
-    
-    
-    col = "red"
+  
+  k0start=400
+  k1start=0.01
+  
+  m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
+  summary(m)
+  
+
+  
+  if (classif == "Good" && plotGood == TRUE){
+    predict = predictNLS(
+      m, 
+      df
+    )
     plotGood = FALSE
-    plot(mois,pred,type="l",col=col, 
-         ylab="gas prod", main="IC courbe de qualité good",
-         ylim=c(0,max(pred)+10))#, data = df)
-    
-    
-    lines(x,preds,lty=2,lwd=3)
-    print(cor(v2,preds))
-    
-  }else if (v[36] == "medium" && plotMed == TRUE){
-    
-    
-    a_start<-120
-    b_start<-2*log(2)/a_start
-    
-    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
-    
-    preds <- predict(m, interval = "prediction")
-    
-    
-    col = "green"
+    col = "red"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(v,predict[,5],type="l")    
+    lines(v,predict[,6],type="l")  
+
+  }else if (classif == "medium" && plotMed == TRUE){
+    predict = predictNLS(
+      m, 
+      df
+    )
     plotMed = FALSE
-    plot(mois,pred,type="l",col=col, ylab="gas prod", 
-         main="IC courbe de qualité medium",
-         ylim=c(0,max(pred)+10))#,data = df)
-    
-    
-    lines(x,preds,lty=2,lwd=3)
-    print(cor(v2,preds))
-    
-  }else if (v[36] == "bad" && plotBad == TRUE){
-    
-    
-    a_start<-40
-    b_start<-10*log(10)/a_start
-    
-    m <- nls(v2~a*exp(-b*x), start = c(a=a_start,b=b_start))
-    
-    preds <- predict(m, interval = "prediction")
-    
-    
-    col = "blue"
+    col = "green"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(v,predict[,5],type="l")    
+    lines(v,predict[,6],type="l")  
+  
+  }else if (classif== "bad" && plotBad == TRUE) {
+    predict = predictNLS(
+      m, 
+      df
+    )
     plotBad = FALSE
-    plot(mois,pred,type="l",col=col, ylab="gas prod", 
-         main="IC courbe de qualité bad",
-         ylim=c(0,max(predict(expfit))+10))#, data = df)
-    
-    lines(x,preds,lty=2,lwd=3)
-    
-    print(cor(v2,preds))
+    col = "blue"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(v,predict[,5],type="l")    
+    lines(v,predict[,6],type="l")    
     
   }
+  
 }
-
 
 
 
@@ -428,12 +384,12 @@ predictNLS <- function(
   ## define counter function
   counter <- function (i) 
   {
-    if (i%%10 == 0) 
-      cat(i)
-    else cat(".")
-    if (i%%50 == 0) 
-      cat("\n")
-    flush.console()
+    #if (i%%10 == 0) 
+    #  cat(i)
+    #else cat(".")
+    #if (i%%50 == 0) 
+    #  cat("\n")
+    #flush.console()
   }
   
   outMAT <- NULL 
@@ -478,7 +434,7 @@ predictNLS <- function(
   colnames(outMAT) <- c("fit", "mean", "sd", "median", "mad", names(QUANT[1]), names(QUANT[2]))
   rownames(outMAT) <- NULL
   
-  cat("\n")
+  #cat("\n")
   
   return(outMAT)  
 }
