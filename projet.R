@@ -109,13 +109,14 @@ for (i in seq2){
   k1=0.1
   y=k0*exp(-k1*mois)
   #v=log(v)#y=log(y)
-  expfit <- lm(v ~ y)
+  expfit <- lm(log(v) ~ y)
   
   #tracé de la figure 1 : les données de production
   if (i==1){
-    plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
   }
-  lines(mois,predict(expfit),type="l",col=col)
+  else 
+    lines(mois,exp(predict(expfit)),type="l",col=col)
 }
 #----------------------------------------------------------
 
@@ -162,11 +163,7 @@ for (i in seq2){
 #pas trop mal je dirai
 #pas d'autres idées -> demander aux maths
 
-
 #3) Courbe haute + courbe basse à 95%
-
-# revoir les parametres k0 et k1 : les changer!!
-#https://www.r-bloggers.com/first-steps-with-non-linear-regression-in-r/
 
 seq1 <- 0:4
 #les 75 premiers puits
@@ -176,7 +173,7 @@ plotGood <- TRUE
 plotMed <- TRUE
 plotBad <- TRUE
 
-par(mfrow=c(2,2))
+par(mfrow=c(2,3))
 for (i in seq2){
   mois <- 1:35
   v <- as.vector(tdata[,i])
@@ -199,53 +196,43 @@ for (i in seq2){
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
-
   
   if (classif == "Good" && plotGood == TRUE){
-    predict = predictNLS(
-      m, 
-      df
-    )
+    #predict1 = predictNLS(m, df)
     plotGood = FALSE
     col = "red"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(v,predict[,5],type="l")    
-    lines(v,predict[,6],type="l")  
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict1[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict1[,7]),type="l",col="black",lwd = 1,lty=2)  
 
   }else if (classif == "medium" && plotMed == TRUE){
-    predict = predictNLS(
-      m, 
-      df
-    )
+    predict2 = predictNLS(m, df)
     plotMed = FALSE
     col = "green"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(v,predict[,5],type="l")    
-    lines(v,predict[,6],type="l")  
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict2[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict2[,7]),type="l",col="black",lwd = 1,lty=2)  
   
   }else if (classif== "bad" && plotBad == TRUE) {
-    predict = predictNLS(
-      m, 
-      df
-    )
+    predict3 = predictNLS(m, df)
     plotBad = FALSE
     col = "blue"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Rég exp avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(v,predict[,5],type="l")    
-    lines(v,predict[,6],type="l")    
-    
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict3[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict3[,7]),type="l",col="black",lwd = 1,lty=2)   
   }
-  
 }
 
-
+#quelles sont les incertitudes??
 
 #4) Suggestions sur 5 courbes mal classées
 #certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
 
 
 
-#5) Gestion des spikes (smoothing curves)
+#5) Gestion des spikes (smoothing curves) 
+
+#fait avec loess
 
 #polynomial de degré 3
 for (i in seq2){
@@ -313,15 +300,13 @@ for (i in seq2){
   
   #tracé de la figure 1 : les données de production
   if (i==1){
-    plot(mois,predict(expfit),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
-    #axis(side=2, at=seq(0, 700, by=100))
-    #box()
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
   }
   lines(mois,predict(expfit),type="l",col=col)
-  
 }
 
-
+###################################
+##      FONCTION LIBRAIRIES      ##
 ###################################
 #Pour la question 3
 
