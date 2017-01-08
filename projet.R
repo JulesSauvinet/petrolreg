@@ -7,10 +7,13 @@
 
 install.packages("gdata")
 install.packages("nls2")
+install.packages("boot")
 library(nls2)
 library(gdata) 
+library(boot)
 
-setwd("..\\..\\Projects\\petrolreg")
+#setwd("..\\..\\Projects\\petrolreg")
+setwd("D:\\Projets\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL, il faut avoir perl d'installé
@@ -115,9 +118,9 @@ for (i in seq2){
   #tracé de la figure 1 : les données de production
   if (i==1){
     plot(v,type="p",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
-  #}
-  #else 
-    lines(mois,exp(predict(expfit)),type="l",col=col)}
+  }
+  else 
+    lines(mois,exp(predict(expfit)),type="l",col=col)
 }
 #----------------------------------------------------------
 
@@ -155,8 +158,8 @@ for (i in seq2){
   
   if (i==1){
     plot(df$v,type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
-  #}
-  lines(df$mois,predict(m),type="l",col=col)}
+  }
+  lines(df$mois,predict(m),type="l",col=col)
 }
 # La régression est moins bonne qu'avec lm
 #----------------------------------------------------------
@@ -228,8 +231,87 @@ for (i in seq2){
 
 #quelles sont les incertitudes??
 
+
+#3) Avec Bootstrap
+
+# Fonction appelée par chaque sélection de la méthode boot
+bs <- function(formula, data, indices) {
+  k0start=400
+  k1start=0.01
+  
+  d <- data[indices,]
+  fit <- nls(formula, start=c(k0=k0start, k1=k1start),d)
+  return(predict(fit)) 
+} 
+
+seq1 <- 0:4
+#les 75 premiers puits
+seq2 <- 1:75
+
+plotGood <- TRUE
+plotMed <- TRUE
+plotBad <- TRUE
+
+par(mfrow=c(2,3))
+for (i in seq2){
+  mois <- 1:35
+  v <- as.vector(tdata[,i])
+  classif = v[36]
+  
+  v <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  df <- data.frame(mois, v)
+  df$lv <- log(df$v)
+  
+  bdf <- boot(data=df, statistic=bs, R=2000, formula=lv ~ k0*exp(-k1*mois))
+  bdf$t # Contient les données générées par boot
+  
+  # Comment intégrer ces données au calcul ci-après ?
+  
+  
+  col="black"
+  
+  k0start=400
+  k1start=0.01
+  
+  m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
+  summary(m)
+  
+  
+  if (classif == "Good" && plotGood == TRUE){
+    predict1 = predictNLS(m, df)
+    plotGood = FALSE
+    col = "red"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict1[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict1[,7]),type="l",col="black",lwd = 1,lty=2)  
+    
+  }else if (classif == "medium" && plotMed == TRUE){
+    predict2 = predictNLS(m, df)
+    plotMed = FALSE
+    col = "green"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict2[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict2[,7]),type="l",col="black",lwd = 1,lty=2)  
+    
+  }else if (classif== "bad" && plotBad == TRUE) {
+    predict3 = predictNLS(m, df)
+    plotBad = FALSE
+    col = "blue"
+    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    lines(mois,exp(predict3[,6]),type="l",col="black",lwd = 1,lty=2)    
+    lines(mois,exp(predict3[,7]),type="l",col="black",lwd = 1,lty=2)   
+  }
+}
 #4) Suggestions sur 5 courbes mal classées
 #certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
+
+
+
 
 
 
