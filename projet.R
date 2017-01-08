@@ -10,12 +10,13 @@ install.packages("nls2")
 library(nls2)
 library(gdata) 
 
-#setwd("..\\..\\Projects\\petrolreg")
+setwd("..\\..\\Projects\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL, il faut avoir perl d'installé
 perl <- 'C:\\Strawberry\\perl\\bin\\perl.exe'
-datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
+datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
+#datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
 datapuits
 
 #on transpose les données pour avoir les puits en colonne et les mois en ligne
@@ -113,10 +114,10 @@ for (i in seq2){
   
   #tracé de la figure 1 : les données de production
   if (i==1){
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
-  }
-  else 
-    lines(mois,exp(predict(expfit)),type="l",col=col)
+    plot(v,type="p",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
+  #}
+  #else 
+    lines(mois,exp(predict(expfit)),type="l",col=col)}
 }
 #----------------------------------------------------------
 
@@ -144,20 +145,22 @@ for (i in seq2){
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
   df <- data.frame(mois, v)
-  df$lv <- log(df$v)
+  df$lv <- df$v
   
-  k0start=400
-  k1start=0.01
+  k0start=-300
+  k1start=0.1
   
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
   if (i==1){
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-  }
-  lines(df$mois,exp(predict(m)),type="l",col=col)
+    plot(df$v,type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
+  #}
+  lines(df$mois,predict(m),type="l",col=col)}
 }
+# La régression est moins bonne qu'avec lm
 #----------------------------------------------------------
+
 
 #Est-ce que cela marche ? avez-vous d'autres idées ?
 #pas trop mal je dirai
@@ -198,7 +201,7 @@ for (i in seq2){
   
   
   if (classif == "Good" && plotGood == TRUE){
-    #predict1 = predictNLS(m, df)
+    predict1 = predictNLS(m, df)
     plotGood = FALSE
     col = "red"
     plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
