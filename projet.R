@@ -127,6 +127,11 @@ for (i in seq2){
 
 #----------------------------------------------------------
 
+#les 75 premiers puits
+k0s <- numeric(75)
+k1s <- numeric(75)
+
+seq2 <- 1:75
 # Tentative avec nls
 par(mfrow=c(1,1))
 for (i in seq2){
@@ -157,11 +162,23 @@ for (i in seq2){
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
+  k0i = coef(m)[1][["k0"]]
+  k1i = coef(m)[2][["k1"]]
+  k0s[i] = k0i
+  k1s[i] = k1i
+  
   if (i==1){
     plot(df$v,type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
   }
   lines(df$mois,predict(m),type="l",col=col)
 }
+k0s
+k1s
+
+plot(k0s,k1s,type="l",col='red',main="k1 en fonction de k0")
+
+
+
 # La régression est moins bonne qu'avec lm
 #----------------------------------------------------------
 
@@ -268,8 +285,8 @@ for (i in seq2){
   df <- data.frame(mois, v)
   df$lv <- log(df$v)
   
-  bdf <- boot(data=df, statistic=bs, R=2000, formula=lv ~ k0*exp(-k1*mois))
-  bdf$t # Contient les données générées par boot
+  #bdf <- boot(data=df, statistic=bs, R=2000, formula=lv ~ k0*exp(-k1*mois))
+  #bdf$t # Contient les données générées par boot
   
   # Comment intégrer ces données au calcul ci-après ?
   
