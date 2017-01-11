@@ -13,13 +13,14 @@ library(gdata)
 library(boot)
 
 #setwd("..\\..\\Projects\\petrolreg")
-setwd("D:\\Projets\\petrolreg")
+#setwd("D:\\Projets\\petrolreg")
+setwd("documents\\M2\\regression\\projet\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL, il faut avoir perl d'installé
 perl <- 'C:\\Strawberry\\perl\\bin\\perl.exe'
-datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
-#datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
+#datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
+datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
 datapuits
 
 #on transpose les données pour avoir les puits en colonne et les mois en ligne
