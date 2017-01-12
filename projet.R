@@ -8,9 +8,13 @@
 install.packages("gdata")
 install.packages("nls2")
 install.packages("boot")
+install.packages("kernlab")
+
 library(nls2)
 library(gdata) 
 library(boot)
+library(kernlab)
+
 
 #setwd("..\\..\\Projects\\petrolreg")
 #setwd("D:\\Projets\\petrolreg")
@@ -32,11 +36,14 @@ tdata
 
 par(mfrow=c(2,3))
 #on va tracer 5 graphiques
-seq1 <- 0:4
+seq1 <- -1:4
 #les 75 premiers puits
 seq2 <- 1:75
+r2 <- numeric(5)
+r2
 
 for (j in seq1){
+  r2j = 0.0
   for (i in seq2){
     
     #l'abscisse
@@ -62,7 +69,7 @@ for (j in seq1){
     mois <- mois[!mois %in%  nd]
     
     #tracé de la figure 1 : les données de production
-    if (j==0){
+    if (j==-1){
       if (i==1){
         plot(mois,v,type="l",col=col, ylab="gas prod", main="Les courbes non fittées",ylim=c(0,max(v)+10))
       }
@@ -71,15 +78,33 @@ for (j in seq1){
     }
     #tracé de la figure 2 : les courbes de production obtenues avec des polynômes de degré 2 (et 0, 1, 3, 4)
     else{
-      fit2 <- lm(v ~ poly(mois, j, raw=TRUE))
+      if (j==0){
+        fit2 <- lm(v ~ 1)
+      }
+      else {
+        fit2 <- lm(v ~ poly(mois, j, raw=TRUE))
+      }
       if (i==1){
         plot(mois, predict(fit2), type="l",col=col, ylab="gas prod", lwd=1, main=paste("Régression polynomiale de degré ",j), ylim=c(0,max(predict(fit2))+10))
       }
       lines(mois, predict(fit2), col=col, ylab="gas prod", lwd=1)
     }
+    if (j >= 0) {
+      r2j=r2j+summary(fit2)$adj.r.squared
+    }
+    #print(r2j)
+  }
+  if (j >= 0){
+    r2j=r2j/i
+    r2[j+1]=r2j
   }
 }
+r2
 
+summary(fit2)
+fit2$coefficients
+summary(fit2)$r.squared
+summary(fit2)$adj.r.squared
 
 #2) Régression parametrique (exponentielle) 
 #valeur pas trop mal avec k0=0.5 et k1=0.1
@@ -90,6 +115,7 @@ for (j in seq1){
 
 # Tentative avec lm
 par(mfrow=c(1,1))
+r2e1 <- numeric(1)
 for (i in seq2){
   
   mois <- 1:35
@@ -118,11 +144,20 @@ for (i in seq2){
   
   #tracé de la figure 1 : les données de production
   if (i==1){
-    plot(v,type="p",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
   }
   else 
     lines(mois,exp(predict(expfit)),type="l",col=col)
+  
+  rsquared = summary(expfit)$adj.r.squared
+  print (rsquared)
+  r2e1=r2e1+summary(expfit)$adj.r.squared
+  
+  #print(r2j)=
 }
+
+r2e1=r2e1/i
+r2e1
 #----------------------------------------------------------
 
 #----------------------------------------------------------
@@ -134,6 +169,8 @@ k1s <- numeric(75)
 seq2 <- 1:75
 # Tentative avec nls
 par(mfrow=c(1,1))
+
+r2e2 <- numeric(1)
 for (i in seq2){
   mois <- 1:35
   v <- as.vector(tdata[,i])
@@ -168,12 +205,19 @@ for (i in seq2){
   k1s[i] = k1i
   
   if (i==1){
-    plot(df$v,type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
+    plot(df$mois,predict(m),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
   }
   lines(df$mois,predict(m),type="l",col=col)
+  
+  rsquared = summary(m)$adj.r.squared
+  print (rsquared)
+  r2e2=r2e2+summary(m)$adj.r.squared
 }
 k0s
 k1s
+summary(m)
+r2e2=r2e2/i
+r2e2
 
 plot(k0s,k1s,type="l",col='red',main="k1 en fonction de k0")
 
@@ -197,7 +241,7 @@ plotGood <- TRUE
 plotMed <- TRUE
 plotBad <- TRUE
 
-par(mfrow=c(2,3))
+par(mfrow=c(2,2))
 for (i in seq2){
   mois <- 1:35
   v <- as.vector(tdata[,i])
@@ -220,12 +264,17 @@ for (i in seq2){
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
+  k0 = signif(coef(m)[1][["k0"]], digits = 6)
+  k1 = signif(coef(m)[2][["k1"]], digits = 6)
+  
   
   if (classif == "Good" && plotGood == TRUE){
     predict1 = predictNLS(m, df)
     plotGood = FALSE
     col = "red"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    plot(df$mois,exp(predict(m)),type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    lines(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    
     lines(mois,exp(predict1[,6]),type="l",col="black",lwd = 1,lty=2)    
     lines(mois,exp(predict1[,7]),type="l",col="black",lwd = 1,lty=2)  
 
@@ -233,7 +282,9 @@ for (i in seq2){
     predict2 = predictNLS(m, df)
     plotMed = FALSE
     col = "green"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    plot(df$mois,exp(predict(m)),type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    lines(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    
     lines(mois,exp(predict2[,6]),type="l",col="black",lwd = 1,lty=2)    
     lines(mois,exp(predict2[,7]),type="l",col="black",lwd = 1,lty=2)  
   
@@ -241,7 +292,9 @@ for (i in seq2){
     predict3 = predictNLS(m, df)
     plotBad = FALSE
     col = "blue"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    plot(df$mois,exp(predict(m)),type="p",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    lines(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(m)))+10))
+    
     lines(mois,exp(predict3[,6]),type="l",col="black",lwd = 1,lty=2)    
     lines(mois,exp(predict3[,7]),type="l",col="black",lwd = 1,lty=2)   
   }
@@ -338,6 +391,7 @@ for (i in seq2){
 #fait avec loess
 
 #polynomial de degré 3
+r2p3 <- numeric(1)
 for (i in seq2){
   
   #l'abscisse
@@ -369,10 +423,19 @@ for (i in seq2){
     plot(mois, predict(fit3), type="l",col=col, ylab="gas prod", lwd=1, main="Régression polynomiale de degré 3 avec smooth ", ylim=c(0,max(predict(fit3))+10))
   }
   lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
-
+  
+  rsquared = summary(fit3)$adj.r.squared
+  print (rsquared)
+  r2p3=r2p3+summary(fit3)$adj.r.squared
 }
 
+r2p3=r2p3/i
+r2p3
+
+
+
 #exponentiel
+r2e3 <- numeric(1)
 par(mfrow=c(1,1))
 for (i in seq2){
   
@@ -406,7 +469,14 @@ for (i in seq2){
     plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
   }
   lines(mois,predict(expfit),type="l",col=col)
+  
+  rsquared = summary(expfit)$adj.r.squared
+  print (rsquared)
+  r2e3=r2e3+summary(expfit)$adj.r.squared
 }
+
+r2e3=r2e3/i
+r2e3
 
 ###################################
 ##      FONCTION LIBRAIRIES      ##
