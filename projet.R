@@ -96,7 +96,7 @@ k0s <- numeric(75)
 k1s <- numeric(75)
 colors <- numeric(75)
 
-par(mfrow=c(1,1))
+par(mfrow=c(1,2))
 for (i in seq2){
   mois <- 1:35
   v <- as.vector(tdata[,i])
@@ -130,11 +130,11 @@ for (i in seq2){
   
   
   #tracé de la figure 1 : les données de production
-  if (i==1){
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10))
-  } else {
-    lines(mois,exp(predict(expfit)),type="l",col=col)
-  }
+  #if (i==1){
+  #  plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10))
+  #} else {
+  #  lines(mois,exp(predict(expfit)),type="l",col=col)
+  #}
 }
 
 
@@ -149,7 +149,83 @@ summary(clustering)
 plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
 lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 
-# 16 courbes mal prédites
+kcoefs$colPred <- clustering$lev[predict(clustering)]
+# On a 16 courbes mal prédites. On en sélectionne 5.
+badClass=c()
+
+# Courbe n°75
+badClass=c(badClass, which(kcoefs$k0 > 145 & kcoefs$k0 < 150))
+
+# Courbe n°61
+badClass=c(badClass, which(kcoefs$k0 > 175 & kcoefs$k0 < 190 & kcoefs$k1 > 0.06 & kcoefs$k1 < 0.07))
+
+# Courbe n°47
+badClass=c(badClass, which(kcoefs$k0 > 109 & kcoefs$k0 < 113 & kcoefs$k1 > 0.02 & kcoefs$k1 < 0.025))
+
+# Courbe n°53
+badClass=c(badClass, which(kcoefs$k0 > 150 & kcoefs$k0 < 175 & kcoefs$k1 < 0.02))
+
+# Courbe n°35
+badClass=c(badClass, which(kcoefs$k0 > 99 & kcoefs$k0 < 105 & kcoefs$k1 > 0.026 & kcoefs$k1 > 0.03))
+
+# On change les valeurs données par les experts pour les données mal prédites
+for(i in seq2){
+  mois <- 1:35
+  v <- as.vector(tdata[,i])
+  
+  col="black"
+  if (v[36] == "Good"){
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "red"
+    }
+  }else if (v[36] == "medium"){
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "green"
+    }
+  }else {
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "blue"
+    }
+  }
+  
+  v <- as.numeric(v[1:35])
+  
+  #on plot pas les 0 qui sont des ND (d'apres moi)
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  
+  #y=k0*exp(-k1*mois)
+  #v=log(v)#y=log(y)
+  expfit <- lm(log(v) ~ mois)
+  summary(expfit)
+  
+  
+  k0i = exp(expfit$coefficients[1])
+  k1i = -expfit$coefficients[2]
+  k0s[i] = k0i
+  k1s[i] = k1i
+  colors[i] = col
+}
+
+
+kcoefs <- c()
+kcoefs$k0 <- k0s
+kcoefs$k1 <- k1s
+kcoefs$col <- colors
+
+clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+summary(clustering)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+
 
 #----------------------------------------------------------
 
@@ -404,9 +480,9 @@ for (i in seq2){
   
   if (i==1){
     plot(mois, predict(fit3), type="l",col=col, ylab="gas prod", lwd=1, main="Régression polynomiale de degré 3 avec smooth ", ylim=c(0,max(predict(fit3))+10))
+  } else {
+    lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
   }
-  lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
-
 }
 
 #exponentiel
@@ -441,8 +517,9 @@ for (i in seq2){
   #tracé de la figure 1 : les données de production
   if (i==1){
     plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
+  } else {
+    lines(mois,exp(predict(expfit)),type="l",col=col)
   }
-  lines(mois,exp(predict(expfit)),type="l",col=col)
 }
 
 ###################################
