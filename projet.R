@@ -1,10 +1,3 @@
-#TODO OPTI les redondances de code
-#TODO Q4
-#TODO trouver k0 et k1 optis
-#TODO trouver des explications formelles aux résultats pour TODO le rapport
-#TODO meilleur smooth que loess?
-
-
 install.packages("gdata")
 install.packages("nls2")
 install.packages("boot")
@@ -16,32 +9,31 @@ library(boot)
 library(kernlab)
 
 
-setwd("..\\..\\Projects\\petrolreg")
-#setwd("D:\\Projets\\petrolreg")
-#setwd("documents\\M2\\regression\\projet\\petrolreg")
+#setwd("..\\..\\Projects\\petrolreg")
+setwd("documents\\M2\\regression\\projet\\petrolreg")
 getwd()
 
-#récupération des données du fichier EXCEL, il faut avoir perl d'installé
+#récupération des données du fichier EXCEL
 perl <- 'C:\\Strawberry\\perl\\bin\\perl.exe'
 datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
 #datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
-datapuits
 
 #on transpose les données pour avoir les puits en colonne et les mois en ligne
-tdata = setNames(data.frame(t(datapuits[,-1])), datapuits[,1])
-tdata
+puits = setNames(data.frame(t(datapuits[,-1])), datapuits[,1])
+puits
 
-#1) On obtient pas les meme courbes que le prof (bizarre, ça doit venir du traitement des données - 
-#et en meme temps c'est WAHL donc on a peut etre raison nous)
+###################
+##   QUESTION   1##
+###################
+#Régressions polynomiales
 
 par(mfrow=c(2,3))
+
 #on va tracer 5 graphiques
 seq1 <- -1:4
-#les 75 premiers puits
+#les 75 puits
 seq2 <- 1:75
 r2 <- numeric(5)
-r2
-
 for (j in seq1){
   r2j = 0.0
   for (i in seq2){
@@ -50,7 +42,7 @@ for (j in seq1){
     mois <- 1:35
     
     #on récupère les données du puits i
-    v <- as.vector(tdata[,i])
+    v <- as.vector(puits[,i])
     
     #la couleur en fonction de la classification de qualité
     col="black"
@@ -63,7 +55,7 @@ for (j in seq1){
     
     v <- as.numeric(v[1:35])
     
-    #on plot pas les 0 qui sont des ND (d'apres moi)
+    #on plot pas les 0 qui sont des ND
     nd <- which(v %in% 0)
     v <- v[v != 0]
     mois <- mois[!mois %in%  nd]
@@ -76,7 +68,7 @@ for (j in seq1){
       lines(mois,v,type="l",col=col) 
 
     }
-    #tracé de la figure 2 : les courbes de production obtenues avec des polynômes de degré 2 (et 0, 1, 3, 4)
+    #tracé de la figure 2 : les courbes de production obtenues avec des polynômes de degré 0, 1, 2, 3, et 4
     else{
       if (j==0){
         fit2 <- lm(v ~ 1)
@@ -94,6 +86,7 @@ for (j in seq1){
     }
     #print(r2j)
   }
+  #on calcule la moyenne des R-Squared pour chaque type de régression
   if (j >= 0){
     r2j=r2j/i
     r2[j+1]=r2j
@@ -101,28 +94,18 @@ for (j in seq1){
 }
 r2
 
-summary(fit2)
-fit2$coefficients
-summary(fit2)$r.squared
-summary(fit2)$adj.r.squared
+###################
+##   QUESTION   2##
+###################
+#Régression exponentielle
 
-#2) Régression parametrique (exponentielle) 
-#valeur pas trop mal avec k0=0.5 et k1=0.1
-#k0 fait fluctuer la valeur de départ notamment (plus k0 est grand, plus les courbes sont hautes au départ)
-#k1 aplatit les courbes 0.1 (TODO expliquer tout ça)
-
-#----------------------------------------------------------
-
-# Tentative avec lm
-k0s <- numeric(75)
-k1s <- numeric(75)
-colors <- numeric(75)
-
+#Avec lm
+rse2=0
 par(mfrow=c(1,1))
 r2e1 <- numeric(1)
 for (i in seq2){
   mois <- 1:35
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   
   col="black"
   if (v[36] == "Good"){
@@ -134,137 +117,35 @@ for (i in seq2){
   
   v <- as.numeric(v[1:35])
   
-  #on plot pas les 0 qui sont des ND (d'apres moi)
   nd <- which(v %in% 0)
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
   
-  #y=k0*exp(-k1*mois)
-  #v=log(v)#y=log(y)
   expfit <- lm(log(v) ~ mois)
-  summary(expfit)
   
-  
-  k0i = exp(expfit$coefficients[1])
-  k1i = -expfit$coefficients[2]
-  k0s[i] = k0i
-  k1s[i] = k1i
-  colors[i] = col
-  
-  
-  #tracé de la figure 1 : les données de production
-  #if (i==1){
-  #  plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10))
-  #} else {
-  #  lines(mois,exp(predict(expfit)),type="l",col=col)
-  #}
-}
-
-
-kcoefs <- c()
-kcoefs$k0 <- k0s
-kcoefs$k1 <- k1s
-kcoefs$col <- colors
-
-clustering <- multinom(col ~ k0 + k1, data = kcoefs)
-summary(clustering)
-
-plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
-lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
-
-kcoefs$colPred <- clustering$lev[predict(clustering)]
-# On a 16 courbes mal prédites. On en sélectionne 5.
-badClass=c()
-
-# Courbe n°75
-badClass=c(badClass, which(kcoefs$k0 > 145 & kcoefs$k0 < 150))
-
-# Courbe n°61
-badClass=c(badClass, which(kcoefs$k0 > 175 & kcoefs$k0 < 190 & kcoefs$k1 > 0.06 & kcoefs$k1 < 0.07))
-
-# Courbe n°47
-badClass=c(badClass, which(kcoefs$k0 > 109 & kcoefs$k0 < 113 & kcoefs$k1 > 0.02 & kcoefs$k1 < 0.025))
-
-# Courbe n°53
-badClass=c(badClass, which(kcoefs$k0 > 150 & kcoefs$k0 < 175 & kcoefs$k1 < 0.02))
-
-# Courbe n°35
-badClass=c(badClass, which(kcoefs$k0 > 99 & kcoefs$k0 < 105 & kcoefs$k1 > 0.026 & kcoefs$k1 > 0.03))
-
-# On change les valeurs données par les experts pour les données mal prédites
-for(i in seq2){
-  mois <- 1:35
-  v <- as.vector(tdata[,i])
-  
-  col="black"
-  if (v[36] == "Good"){
-    if(i %in% badClass){
-      col = kcoefs$colPred[i]
-    } else {
-      col = "red"
-    }
-  }else if (v[36] == "medium"){
-    if(i %in% badClass){
-      col = kcoefs$colPred[i]
-    } else {
-      col = "green"
-    }
-  }else {
-    if(i %in% badClass){
-      col = kcoefs$colPred[i]
-    } else {
-      col = "blue"
-    }
+  # tracé de la figure 1 : les données de production 
+  if (i==1){
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod",
+         main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10)) 
   }
-  
-  v <- as.numeric(v[1:35])
-  
-  #on plot pas les 0 qui sont des ND (d'apres moi)
-  nd <- which(v %in% 0)
-  v <- v[v != 0]
-  mois <- mois[!mois %in%  nd]
-  
-  #y=k0*exp(-k1*mois)
-  #v=log(v)#y=log(y)
-  expfit <- lm(log(v) ~ mois)
-  summary(expfit)
-  
-  
-  k0i = exp(expfit$coefficients[1])
-  k1i = -expfit$coefficients[2]
-  k0s[i] = k0i
-  k1s[i] = k1i
-  colors[i] = col
+  else {
+    lines(mois,exp(predict(expfit)),type="l",col=col)
+  }
+  rse2 = rse2 + exp(sigma(expfit))
 }
-
-  rsquared = summary(expfit)$adj.r.squared
-  print (rsquared)
-  r2e1=r2e1+summary(expfit)$adj.r.squared
-}
-
-r2e1=r2e1/i
-r2e1
-kcoefs <- c()
-kcoefs$k0 <- k0s
-kcoefs$k1 <- k1s
-kcoefs$col <- colors
-
-clustering <- multinom(col ~ k0 + k1, data = kcoefs)
-summary(clustering)
-
-plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
-lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+rse2 = rse2 / 75
+rse2 
+summary(expfit)
 
 
 #----------------------------------------------------------
 
-#----------------------------------------------------------
+#Avec nls
+rse = 0
 
-#les 75 premiers puits
 k0s <- numeric(75)
 k1s <- numeric(75)
 colors <- numeric(75)
-
 seq2 <- 1:75
 # Tentative avec nls
 par(mfrow=c(1,1))
@@ -272,7 +153,7 @@ par(mfrow=c(1,1))
 r2e2 <- numeric(1)
 for (i in seq2){
   mois <- 1:35
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   
   col="black"
   if (v[36] == "Good"){
@@ -305,19 +186,18 @@ for (i in seq2){
   colors[i] = col
   
   if (i==1){
-    plot(df$mois,predict(m),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
+    plot(df$mois,predict(m),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle"),ylim=c(0,max(predict(m))+10))
   }
   lines(df$mois,predict(m),type="l",col=col)
   
-  rsquared = summary(m)$adj.r.squared
-  print (rsquared)
-  r2e2=r2e2+summary(m)$adj.r.squared
+  rse = rse + sigma(m)
 }
-k0s
-k1s
+
+rse = rse / 75
+rse 
 summary(m)
-r2e2=r2e2/i
-r2e2
+
+
 
 kcoefs <- c()
 kcoefs$k0 <- k0s
@@ -331,16 +211,10 @@ plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de 
 lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 
 
-
-# La régression est moins bonne qu'avec lm
-#----------------------------------------------------------
-
-
-#Est-ce que cela marche ? avez-vous d'autres idées ?
-#pas trop mal je dirai
-#pas d'autres idées -> demander aux maths
-
-#3) Courbe haute + courbe basse à 95%
+###################
+##   QUESTION   3##
+###################
+#Courbe haute + courbe basse à 95%
 
 seq1 <- 0:4
 #les 75 premiers puits
@@ -353,7 +227,7 @@ plotBad <- TRUE
 par(mfrow=c(2,2))
 for (i in seq2){
   mois <- 1:35
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   classif = v[36]
   
   v <- as.numeric(v[1:35])
@@ -373,8 +247,8 @@ for (i in seq2){
   m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
   summary(m)
   
-  k0 = signif(coef(m)[1][["k0"]], digits = 6)
-  k1 = signif(coef(m)[2][["k1"]], digits = 6)
+  k0 = signif(exp(coef(m)[1][["k0"]]), digits = 4)
+  k1 = signif(exp(coef(m)[2][["k1"]]), digits = 4)
   
   
   if (classif == "Good" && plotGood == TRUE){
@@ -425,22 +299,18 @@ plotBad <- TRUE
 par(mfrow=c(2,3))
 for (i in seq2){
   mois <- 1:35
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   classif = v[36]
   
   col="black"
   
   v <- as.numeric(v[1:35])
   
-  #on plot pas les 0 qui sont des ND (d'apres moi)
   nd <- which(v %in% 0)
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
   
-  #y=k0*exp(-k1*mois)
-  #v=log(v)#y=log(y)
   expfit <- lm(log(v) ~ mois)
-  summary(expfit)
   
   
   k0start = signif(exp(expfit$coefficients[1]), digit=6)
@@ -449,48 +319,235 @@ for (i in seq2){
   if (classif == "Good" && plotGood == TRUE){
     plotGood = FALSE
     col = "red"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    
+    v1=log(v)
+    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
+    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
+    
+    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
+    
+    rownames(tab3_bis)[1]="theta"
+    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
+    
+    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
+    tab_4
+    
+    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
+    
+    l = ci[1,3]
+    u = ci[2,3]
+    
+    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
     
   }else if (classif == "medium" && plotMed == TRUE){
     plotMed = FALSE
     col = "green"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
-      
+    v1=log(v)
+    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
+    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
+    
+    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
+    
+    rownames(tab3_bis)[1]="theta"
+    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
+    
+    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
+    tab_4
+    
+    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
+    
+    l = ci[1,3]
+    u = ci[2,3]
+    
+    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    
     
   }else if (classif== "bad" && plotBad == TRUE) {
     plotBad = FALSE
     col = "blue"
-    plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
     
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
-    mean.boot <- function(x, ind) {
-      c(mean(x[ind]), var(x[ind])/length(x))
-    }
-    out <- boot(exp(m$fitted.values), mean.boot, 999)
-    boot.ci(out)
+    #v_trie=sort(v) # on trie le premier éch avant de générer les 3 ech bootstrap
+    #x1=sample(v_trie,replace=T) # replace =T pour préciser avec remise
+    #x2=sample(v_trie,replace=T)
+    #x3=sample(v_trie,replace=T)
     
-    l = boot.ci(out)$basic[4]
-    u = boot.ci(out)$basic[5]
-    print(l)
-    print(u)
+    #tab1=cbind(y_trie,xstar1=sort(x1),xstar2=sort(x2),xstar3=sort(x3))
+    #tab2=cbind(Moyenne=apply(tab1,2,mean),Médiane=apply(tab1,2,median),Variance=apply(tab1,2,var))
+    #rownames(tab2)=c("theta","theta_star1","theta_star2","theta_star3")
     
+    v1=log(v)
+    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
+    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
     
-    abline(v=c(u,l))  
+    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
+    
+    rownames(tab3_bis)[1]="theta"
+    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
+    
+    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
+    tab_4
+    
+    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
+    
+    l = ci[1,3]
+    u = ci[2,3]
+    
+    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
   }
 }
 
-
-
+ci
 
 
 #4) Suggestions sur 5 courbes mal classées
 #certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
 
+#On stocke les valeurs de k0 et k1
+k0s <- numeric(75)
+k1s <- numeric(75)
+colors <- numeric(75)
+
+par(mfrow=c(1,1))
+r2e1 <- numeric(1)
+for (i in seq2){
+  mois <- 1:35
+  v <- as.vector(puits[,i])
+  
+  col="black"
+  if (v[36] == "Good"){
+    col = "red"
+  }else if (v[36] == "medium"){
+    col = "green"
+  }else 
+    col = "blue"
+  
+  v <- as.numeric(v[1:35])
+  
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  
+  expfit <- lm(log(v) ~ mois)
+  summary(expfit)
+  
+  k0i = exp(expfit$coefficients[1])
+  k1i = -expfit$coefficients[2]
+  k0s[i] = k0i
+  k1s[i] = k1i
+  colors[i] = col
+  
+  
+  # tracé de la figure 1 : les données de production 
+  if (i==1){
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod",
+         main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10)) 
+  }
+  else {
+    lines(mois,exp(predict(expfit)),type="l",col=col)
+  }
+}
 
 
+kcoefs <- c()
+kcoefs$k0 <- k0s
+kcoefs$k1 <- k1s
+kcoefs$col <- colors
+
+clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+summary(clustering)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+
+kcoefs$colPred <- clustering$lev[predict(clustering)]
+# On a 16 courbes mal prédites. On en sélectionne 5.
+badClass=c()
+
+# Courbe n°75
+badClass=c(badClass, which(kcoefs$k0 > 145 & kcoefs$k0 < 150))
+
+# Courbe n°61
+badClass=c(badClass, which(kcoefs$k0 > 175 & kcoefs$k0 < 190 & kcoefs$k1 > 0.06 & kcoefs$k1 < 0.07))
+
+# Courbe n°47
+badClass=c(badClass, which(kcoefs$k0 > 109 & kcoefs$k0 < 113 & kcoefs$k1 > 0.02 & kcoefs$k1 < 0.025))
+
+# Courbe n°53
+badClass=c(badClass, which(kcoefs$k0 > 150 & kcoefs$k0 < 175 & kcoefs$k1 < 0.02))
+
+# Courbe n°35
+badClass=c(badClass, which(kcoefs$k0 > 99 & kcoefs$k0 < 105 & kcoefs$k1 > 0.026 & kcoefs$k1 > 0.03))
+
+# On change les valeurs données par les experts pour les données mal prédites
+for(i in seq2){
+  mois <- 1:35
+  v <- as.vector(puits[,i])
+  
+  col="black"
+  if (v[36] == "Good"){
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "red"
+    }
+  }else if (v[36] == "medium"){
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "green"
+    }
+  }else {
+    if(i %in% badClass){
+      col = kcoefs$colPred[i]
+    } else {
+      col = "blue"
+    }
+  }
+  
+  v <- as.numeric(v[1:35])
+  
+  nd <- which(v %in% 0)
+  v <- v[v != 0]
+  mois <- mois[!mois %in%  nd]
+  
+  expfit <- lm(log(v) ~ mois)
+  summary(expfit)
+  
+  
+  k0i = exp(expfit$coefficients[1])
+  k1i = -expfit$coefficients[2]
+  k0s[i] = k0i
+  k1s[i] = k1i
+  colors[i] = col
+  
+  rsquared = summary(expfit)$adj.r.squared
+  print (rsquared)
+  r2e1=r2e1+summary(expfit)$adj.r.squared
+}
+
+
+r2e1=r2e1/i
+r2e1
+kcoefs <- c()
+kcoefs$k0 <- k0s
+kcoefs$k1 <- k1s
+kcoefs$col <- colors
+
+clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+summary(clustering)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 
 
 
@@ -508,7 +565,7 @@ for (i in seq2){
   mois <- 1:35
   
   #on récupère les données du puits i
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   
   #la couleur en fonction de la classification de qualité
   col="black"
@@ -537,13 +594,11 @@ for (i in seq2){
   lines(mois, predict(fit3), col=col, ylab="gas prod", lwd=1)
   
   rsquared = summary(fit3)$adj.r.squared
-  print (rsquared)
   r2p3=r2p3+summary(fit3)$adj.r.squared
 }
 
 r2p3=r2p3/i
 r2p3
-
 
 
 #exponentiel
@@ -552,7 +607,7 @@ par(mfrow=c(1,1))
 for (i in seq2){
   
   mois <- 1:35
-  v <- as.vector(tdata[,i])
+  v <- as.vector(puits[,i])
   
   col="black"
   if (v[36] == "Good"){
@@ -571,23 +626,18 @@ for (i in seq2){
   
   smooth <- loess(v~mois)
   
-  nd2 <- which(smooth$fitted %in% 0)
-  smooth$fitted <- smooth$fitted[smooth$fitted != 0]
+  nd2 <- which(smooth$fitted <= 0)
+  smooth$fitted <- smooth$fitted[smooth$fitted > 0]
   mois <- mois[!mois %in%  nd2]
   
-  #k0=0.5
-  #k1=0.1
-  #y=k0*exp(-k1*mois)
   expfit <- lm(log(smooth$fitted) ~ mois)
   
   #tracé de la figure 1 : les données de production
   if (i==1){
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec smooth et avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(predict(expfit))+10))
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main="Régression exponentielle avec smooth",ylim=c(0,max(exp(predict(expfit)))+10))
   } else {
     lines(mois,exp(predict(expfit)),type="l",col=col)
   }
-
-  lines(mois,predict(expfit),type="l",col=col)
   
   rsquared = summary(expfit)$adj.r.squared
   print (rsquared)
