@@ -115,9 +115,11 @@ Pour cela, plusieurs r \'egressions vont \^etre envisag\'ees afin d'avoir la mei
 \section{R\'egressions polynomiales}
 \label{sec:reg_pol}
 
-Si on se r\'ef\`ere \'a la figure ci-dessus, on observe que la plupart des simulations
-pr\'esente une remont\'ee au bout de quelques mois, que certaines simulations sont concaves
-au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir des valeurs n\'egatives (autour des 35 mois d'exploitation).
+Une fa\c con simple est d'ajuster un polyn\^ome de degr\'e faible sur chacune des courbes et
+de voir si les coefficients pr\'esentent des clusters, c'est \`a dire des groupes de points distincts
+quand on les regarde dans l'espace.
+On essaiera des polyn\^omes de degr\'e 0, 1, 2, 3, et 4.
+On pr\'esentera les courbes de production simul\'ees obtenues, comme dans la figure ci-dessous.
 
 %\figurename~\ref{fig:sspc_mpc} shows a basic laboratory setup for SSPC. The temperature of the probe is controlled with a cryostat. A voltage is applied to the probe and the current is measured with an electrometer under illumination produced with LEDs. A neutral filter can be used to further reduce the intensity of the light. The intensity of the LEDs could also be modulated and the current be measured with a lock-in amplifier (this will be covered in section~\ref{sec:mpc}).
 %This is shown in figure \ref{fig:cutoff_example}.
@@ -125,8 +127,18 @@ au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir de
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
 	\includegraphics[width=250px]{reg_pol}
-  \caption{\label{fig:polynomial_regressions} Courbes non r\'egress\'ees, et courbes de r\'egressions polynomiales de degr\'es 1,2,3 et 4}
+  \caption{\label{fig:polynomial_regressions} Courbes non r\'egress\'ees, et courbes de r\'egressions polynomiales de degr\'es $0$,$1$,$2$,$3$ et $4$}
 \end{figure}
+
+La moyenne des R-Squared ajusted pour les $75$ courbes pour les $5$ types de r\'egression sont respectivement : 
+\newline
+$0.0000000$, $0.4853609$, $0.6622269$, $0.7202006$ et $0.7557633$.
+\newline
+On voit que plus le degr\'e du polynome augmente, plus la r\'egression est de qualit\'e au cri\`ere du R-Squared (les valeurs pr\'edites se rapprochent des valeurs des observations.
+
+Si on se r\'ef\`ere \`a la figure ci-dessus, on observe que la plupart des simulations
+pr\'esente une remont\'ee au bout de quelques mois, que certaines simulations sont concaves
+au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir des valeurs n\'egatives (autour des $35$ mois d'exploitation).
 
 \newpage
 
@@ -135,8 +147,8 @@ au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir de
 
 Une id\'ee simple pour corriger ces d\'efauts est d'utiliser une autre forme param\'etrique pour
 les simulations. Une suggestion imm\'ediate pour qui a un peu l'habitude de ces courbes est
-une forme exponentielle du style : , o\'u y est la production, t le mois, et k0 et
-k1 deux param\`etres \'a d\'eterminer.
+une forme exponentielle du style : o\'u $y$ est la production, $t$ le mois, et $k0$ et
+$k1$ deux param\`etres \'a d\'eterminer.
 
 \textbf{R\'egression exponentielle avec lm}
 
@@ -155,7 +167,15 @@ k1 deux param\`etres \'a d\'eterminer.
   \caption{\label{fig:exponential_reg_nls} Courbes r\'egress\'ees avec une fonction exponentielle et et la fonction nls de R}
 \end{figure}
 
-Est-ce que cela marche ? avez-vous d'autres id\'ees ?
+
+La r\'egression avec lm para\^it mieux, on s'int\'eressera donc \'a celle-ci.
+
+Est-ce que cela marche ? 
+La moyenne du "ajusted R-Squared" pour les 75 r\'egressions exponentielles est cette fois-ci de $0.6754964$, donc de moins bonne quali\'e \'a priori que les r\'egressions polynomiales de degr\'e sup\'erieures ou \'egale \'a $3$. N\'eanmoins, quand on s'int\'eresse au d\'etail des R-Squared, on trouve de tr\'es bonne r\'egressions avec un R-Squared tr\`es bon comme des r\'egressions avec un R-Squared tr\`es mauvais. Cela est probablement d\^u à certaines valeurs "outliers" qui ne permettent pas \'a la fonction exponentielle de s'adapter aux courbes. La partie $5$ et le lissage des courbes permettra de pallier \'a ce probl\`eme et de probablement monter que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
+$10$ premiers R-Squared : $0.889547$, $0.203835$, $0.7613715$, $0.936559$, $0.2696669$, $0.726263$, $0.1067514$, $0.8683789$, $0.6881983$, $0.8563925$.
+
+Avez-vous d'autres id\'ees ?
+R\'egression avec fonction inverse, ou gaussienne, ou log? ou combinaison.
 
 \newpage
 
@@ -165,12 +185,12 @@ Quelles sont les incertitudes sur les r\'egressions des points 2 ? Plus concr\`e
 vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute (\'a
 95\%) et la courbe basse (toujours \'a 95\%)
 
-\textbf{Avec predict nls ....}
+\textbf{Intervalles de confiance}
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
-	\includegraphics[width=250px]{q3_predict_nls}
-  \caption{\label{fig:q3_predict_nls} Courbes hautes et basses pour un exemple de 3 classes de courbes}
+	\includegraphics[width=400px]{q3_predict_nls}
+  \caption{\label{fig:q3_predict_nls} Courbes hautes et basses à 95\% pour un exemple de chaque classes de courbes}
 \end{figure}
 
 
@@ -195,7 +215,8 @@ vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute
  
 En examinant le graphe k1 fonction de k0, on se rend compte que certaines courbes
 class\'ees 'Good' par les experts donnent l'impression d'\^etre plut\^ot 'medium', tandis que
-certaines 'bad' pourraient \^etre aussi 'medium'. //
+certaines 'bad' pourraient \^etre aussi 'medium'. 
+\newline
 Avez-vous des suggestions sur 5 courbes au
 plus qui pourraient \^etre mal class\'ees ? Justifiez vos choix (i.e. une fa\c con de faire est
 d'effectuer une r\'egression logistique dont le y est la classe pr\'edite par l'expert et les x sont
@@ -203,6 +224,8 @@ les coefficients k0 et k1, et d'examiner comment la r\'egression est am\'elior\'
 classe d'un point ; une autre fa\c con plus empirique est de d\'eterminer deux droites x=k11 et
 x=k12 qui partitionnent au mieux les classes et d'examiner comme pr\'ec\'edemment comment
 la classification est chang\'ee en basculant certains points d'une classe \'a l'autre).
+
+TODO glm
 
 
 \newpage
@@ -217,6 +240,8 @@ la classification est chang\'ee en basculant certains points d'une classe \'a l'
   \caption{\label{fig:reg_pol3_smooth_loess} R\'egression polynomiale de degr\'e 3 avec courbes liss\'ee au pr\'ealable avec loess}
 \end{figure}
 
+On obtient une moyenne de R-Squared de $0.9802724$ cette fois-ci apr\`es lissage des courbes. La r\'egression polynomiale devient ainsi tr\`es performante. Il reste \`a savoir si l'on peut se permettre l'approximation fa\^ite par le lissage des courbes et si les valeurs induites par les spikes avait une pertinence intransigible.
+
 \textbf{R\'egression exponentielle avec lissage loess}
 
 \begin{figure}[H]
@@ -225,6 +250,7 @@ la classification est chang\'ee en basculant certains points d'une classe \'a l'
   \caption{\label{fig:reg_exp_smooth_loess} R\'egression exponentielle lm avec courbes liss\'ee au pr\'ealable avec loess}
 \end{figure}
 
+On obtient une moyenne de R-Squared de $0.845492$ cette fois-ci apr\`es lissage des courbes. La r\'egression est sensiblement am\'elior\'ee avec le lissage des courbes mais reste moins efficace que la r\'egression polynomiale de degr\'e 3.
 
 \newpage
 
