@@ -172,10 +172,13 @@ La r\'egression avec lm para\^it mieux, on s'int\'eressera donc \'a celle-ci.
 
 Est-ce que cela marche ? 
 La moyenne du "ajusted R-Squared" pour les 75 r\'egressions exponentielles est cette fois-ci de $0.6754964$, donc de moins bonne quali\'e \'a priori que les r\'egressions polynomiales de degr\'e sup\'erieures ou \'egale \'a $3$. N\'eanmoins, quand on s'int\'eresse au d\'etail des R-Squared, on trouve de tr\'es bonne r\'egressions avec un R-Squared tr\`es bon comme des r\'egressions avec un R-Squared tr\`es mauvais. Cela est probablement d\^u à certaines valeurs "outliers" qui ne permettent pas \'a la fonction exponentielle de s'adapter aux courbes. La partie $5$ et le lissage des courbes permettra de pallier \'a ce probl\`eme et de probablement monter que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
-$10$ premiers R-Squared : $0.889547$, $0.203835$, $0.7613715$, $0.936559$, $0.2696669$, $0.726263$, $0.1067514$, $0.8683789$, $0.6881983$, $0.8563925$.
+$10$ premiers R-Squared : $0.8011383$, $0.4182548$, $0.7403922$, $0.7585257$, $0.4186529$, $0.6888943$, $0.3297291$, $0.818889$, $0.7745934$
+et $0.7527809$.
 
 Avez-vous d'autres id\'ees ?
-R\'egression avec fonction inverse, ou gaussienne, ou log? ou combinaison.
+R\'egression avec fonction inverse, ou gaussienne? 
+\newline
+Ou bien une composé de polyn\^ome dans un logarithme.
 
 \newpage
 
@@ -204,14 +207,6 @@ vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute
 
 \newpage
 \section{Reclassement avec r\'egression logistique}
-
-\textbf{$k1$ en fonction de $k0$}
-
-\begin{figure}[H]
- \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
-	\includegraphics[width=250px]{k0_k1}
-  \caption{\label{fig:k0_k1} Coefficients $k1$ en fonction de $k0$}
-\end{figure}
  
 En examinant le graphe k1 fonction de k0, on se rend compte que certaines courbes
 class\'ees 'Good' par les experts donnent l'impression d'\^etre plut\^ot 'medium', tandis que
@@ -225,7 +220,16 @@ classe d'un point ; une autre fa\c con plus empirique est de d\'eterminer deux d
 x=k12 qui partitionnent au mieux les classes et d'examiner comme pr\'ec\'edemment comment
 la classification est chang\'ee en basculant certains points d'une classe \'a l'autre).
 
-TODO glm
+\textbf{$k1$ en fonction de $k0$}
+
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=250px]{clustering}
+  \caption{\label{fig:k0_k1} Coefficients $k1$ en fonction de $k0$}
+\end{figure}
+
+TODO explain
+TODO changer de classe etc.
 
 
 \newpage
@@ -240,7 +244,7 @@ TODO glm
   \caption{\label{fig:reg_pol3_smooth_loess} R\'egression polynomiale de degr\'e 3 avec courbes liss\'ee au pr\'ealable avec loess}
 \end{figure}
 
-On obtient une moyenne de R-Squared de $0.9802724$ cette fois-ci apr\`es lissage des courbes. La r\'egression polynomiale devient ainsi tr\`es performante. Il reste \`a savoir si l'on peut se permettre l'approximation fa\^ite par le lissage des courbes et si les valeurs induites par les spikes avait une pertinence intransigible.
+On obtient une moyenne de R-Squared de $0.9802724$ cette fois-ci apr\`es lissage des courbes. La r\'egression polynomiale devient ainsi tr\`es performante. Il reste \`a savoir si l'on peut se permettre l'approximation fa\^ite par le lissage des courbes et si les valeurs induites par les spikes avait une pertinence intransigible. Toutefois, la r\'egression avec smooth ne r\`egle pas les valeurs qui remontent, les simulations concaves au lieu d'\^etre convexes, et les potentielles valeurs n\'egatives autour des $35$ mois.
 
 \textbf{R\'egression exponentielle avec lissage loess}
 

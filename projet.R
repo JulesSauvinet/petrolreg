@@ -337,16 +337,6 @@ for (i in seq2){
 
 #3) Avec Bootstrap
 
-# Fonction appelée par chaque sélection de la méthode boot
-bs <- function(formula, data, indices) {
-  k0start=400
-  k1start=0.01
-  
-  d <- data[indices,]
-  fit <- nls(formula, start=c(k0=k0start, k1=k1start),d)
-  return(predict(fit)) 
-} 
-
 seq1 <- 0:4
 #les 75 premiers puits
 seq2 <- 1:75
@@ -361,55 +351,64 @@ for (i in seq2){
   v <- as.vector(tdata[,i])
   classif = v[36]
   
+  col="black"
+  
   v <- as.numeric(v[1:35])
   
   #on plot pas les 0 qui sont des ND (d'apres moi)
   nd <- which(v %in% 0)
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
-  df <- data.frame(mois, v)
-  df$lv <- log(df$v)
   
-  #bdf <- boot(data=df, statistic=bs, R=2000, formula=lv ~ k0*exp(-k1*mois))
-  #bdf$t # Contient les données générées par boot
-  
-  # Comment intégrer ces données au calcul ci-après ?
+  #y=k0*exp(-k1*mois)
+  #v=log(v)#y=log(y)
+  expfit <- lm(log(v) ~ mois)
+  summary(expfit)
   
   
-  col="black"
-  
-  k0start=400
-  k1start=0.01
-  
-  m <- nls(lv ~ k0*exp(-k1*mois), start=c(k0=k0start, k1=k1start), df)
-  summary(m)
-  
+  k0start = signif(exp(expfit$coefficients[1]), digit=6)
+  k1start = signif(-expfit$coefficients[2], digit=6)
   
   if (classif == "Good" && plotGood == TRUE){
-    predict1 = predictNLS(m, df)
     plotGood = FALSE
     col = "red"
     plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(mois,exp(predict1[,6]),type="l",col="black",lwd = 1,lty=2)    
-    lines(mois,exp(predict1[,7]),type="l",col="black",lwd = 1,lty=2)  
+    
     
   }else if (classif == "medium" && plotMed == TRUE){
-    predict2 = predictNLS(m, df)
     plotMed = FALSE
     col = "green"
     plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(mois,exp(predict2[,6]),type="l",col="black",lwd = 1,lty=2)    
-    lines(mois,exp(predict2[,7]),type="l",col="black",lwd = 1,lty=2)  
+    
+      
     
   }else if (classif== "bad" && plotBad == TRUE) {
-    predict3 = predictNLS(m, df)
     plotBad = FALSE
     col = "blue"
     plot(df$mois,exp(predict(m)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(m)))+10))
-    lines(mois,exp(predict3[,6]),type="l",col="black",lwd = 1,lty=2)    
-    lines(mois,exp(predict3[,7]),type="l",col="black",lwd = 1,lty=2)   
+    
+    
+    mean.boot <- function(x, ind) {
+      c(mean(x[ind]), var(x[ind])/length(x))
+    }
+    out <- boot(exp(m$fitted.values), mean.boot, 999)
+    boot.ci(out)
+    
+    l = boot.ci(out)$basic[4]
+    u = boot.ci(out)$basic[5]
+    print(l)
+    print(u)
+    
+    
+    abline(v=c(u,l))  
+    
   }
 }
+
+
+
+
+
 #4) Suggestions sur 5 courbes mal classées
 #certaines apparaissent clairement (graphiquement) comme pouvant être classées différemment
 
@@ -421,7 +420,9 @@ for (i in seq2){
 #5) Gestion des spikes (smoothing curves) 
 
 #fait avec loess
-
+seq1 <- 0:4
+#les 75 premiers puits
+seq2 <- 1:75
 #polynomial de degré 3
 r2p3 <- numeric(1)
 for (i in seq2){
@@ -490,6 +491,10 @@ for (i in seq2){
   mois <- mois[!mois %in%  nd]
   
   smooth <- loess(v~mois)
+  
+  nd2 <- which(smooth$fitted %in% 0)
+  smooth$fitted <- smooth$fitted[smooth$fitted != 0]
+  mois <- mois[!mois %in%  nd2]
   
   #k0=0.5
   #k1=0.1
