@@ -9,22 +9,22 @@ install.packages("gdata")
 install.packages("nls2")
 install.packages("boot")
 install.packages("kernlab")
-
+library(nnet)
 library(nls2)
 library(gdata) 
 library(boot)
 library(kernlab)
 
 
-#setwd("..\\..\\Projects\\petrolreg")
+setwd("..\\..\\Projects\\petrolreg")
 #setwd("D:\\Projets\\petrolreg")
-setwd("documents\\M2\\regression\\projet\\petrolreg")
+#setwd("documents\\M2\\regression\\projet\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL, il faut avoir perl d'installé
 perl <- 'C:\\Strawberry\\perl\\bin\\perl.exe'
-#datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
-datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
+datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"))
+#datapuits = read.xls(file.path("data/FW_Donnees_Puits.xlsx"), perl=perl)
 datapuits
 
 #on transpose les données pour avoir les puits en colonne et les mois en ligne
@@ -114,10 +114,13 @@ summary(fit2)$adj.r.squared
 #----------------------------------------------------------
 
 # Tentative avec lm
+k0s <- numeric(75)
+k1s <- numeric(75)
+colors <- numeric(75)
+
 par(mfrow=c(1,1))
 r2e1 <- numeric(1)
 for (i in seq2){
-  
   mois <- 1:35
   v <- as.vector(tdata[,i])
   
@@ -136,28 +139,46 @@ for (i in seq2){
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
   
-  k0=0.5
-  k1=0.1
-  y=k0*exp(-k1*mois)
+  #y=k0*exp(-k1*mois)
   #v=log(v)#y=log(y)
-  expfit <- lm(log(v) ~ y)
+  expfit <- lm(log(v) ~ mois)
+  summary(expfit)
+  
+  
+  k0i = exp(expfit$coefficients[1])
+  k1i = -expfit$coefficients[2]
+  k0s[i] = k0i
+  k1s[i] = k1i
+  colors[i] = col
+  
   
   #tracé de la figure 1 : les données de production
   if (i==1){
     plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", main=paste("Régression exponentielle avec k0 =",k0,"et k1 =",k1),ylim=c(0,max(exp(predict(expfit)))+10))
-  }
-  else 
+  } else {
     lines(mois,exp(predict(expfit)),type="l",col=col)
-  
+  }
+
   rsquared = summary(expfit)$adj.r.squared
   print (rsquared)
   r2e1=r2e1+summary(expfit)$adj.r.squared
-  
-  #print(r2j)=
 }
 
 r2e1=r2e1/i
 r2e1
+kcoefs <- c()
+kcoefs$k0 <- k0s
+kcoefs$k1 <- k1s
+kcoefs$col <- colors
+
+clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+summary(clustering)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+
+# 16 courbes mal prédites
+
 #----------------------------------------------------------
 
 #----------------------------------------------------------
@@ -165,6 +186,7 @@ r2e1
 #les 75 premiers puits
 k0s <- numeric(75)
 k1s <- numeric(75)
+colors <- numeric(75)
 
 seq2 <- 1:75
 # Tentative avec nls
@@ -203,6 +225,7 @@ for (i in seq2){
   k1i = coef(m)[2][["k1"]]
   k0s[i] = k0i
   k1s[i] = k1i
+  colors[i] = col
   
   if (i==1){
     plot(df$mois,predict(m),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(predict(m))+10))
@@ -219,7 +242,16 @@ summary(m)
 r2e2=r2e2/i
 r2e2
 
-plot(k0s,k1s,type="l",col='red',main="k1 en fonction de k0")
+kcoefs <- c()
+kcoefs$k0 <- k0s
+kcoefs$k1 <- k1s
+kcoefs$col <- colors
+
+clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+summary(clustering)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 
 
 
@@ -459,10 +491,10 @@ for (i in seq2){
   
   smooth <- loess(v~mois)
   
-  k0=0.5
-  k1=0.1
-  y=k0*exp(-k1*mois)
-  expfit <- lm(smooth$fitted ~ y)
+  #k0=0.5
+  #k1=0.1
+  #y=k0*exp(-k1*mois)
+  expfit <- lm(log(smooth$fitted) ~ mois)
   
   #tracé de la figure 1 : les données de production
   if (i==1){
