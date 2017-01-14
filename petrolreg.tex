@@ -298,11 +298,11 @@ On obtient cette toujours $16$ courbes mal class\'ees, un AIC de $85$ et le grap
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
 	\includegraphics[width=300px]{smooth_clustering_exp}
-  \caption{\label{fig:reg_exp_clust} Clustering sur mod\`ele exponentiel avec courbes liss\'ee}
+  \caption{\label{fig:reg_exp_clust} Clustering sur mod\`ele exponentiel avec courbes liss\'ees}
 \end{figure}
 
 On se limite comme dans la partie $3$ \'a seulement $5$ reclassement de courbes.
-Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well-288$', '$Well-258$', on obtient un AIC de $56$ et plus que $8$ courbes mal classements en faisant une nouvelle r\'egression logistique, soit $3$ courbes dont la classe a  pr\'edite a fois-ci ont \'et\'e \'egale \'a celle observ\'ee.
+Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well-288$', '$Well-258$', on obtient un AIC de $56$ et plus que $8$ courbes mal class\'ees en faisant une nouvelle r\'egression logistique, soit $3$ courbes dont la classe pr\'edite a cette fois-ci \'et\'e \'egale \'a celle observ\'ee.
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
@@ -310,9 +310,76 @@ Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well
   \caption{\label{fig:reg_exp_clust_2} Clustering sur mod\`ele exponentiel avec courbes liss\'ee apr\'es reclassement}
 \end{figure}
 
+\newpage
 
+\textbf{Reclassemement apr\`es lissage des courbes et ajustement polynomial}
+
+On effectue une r\'egression logistique \'a partir des courbes liss\'ees et ajuster par un polyn\^ome de degr\'e $3$ cette fois-ci.
+On obtient cette toujours $12$ courbes mal class\'ees, un AIC de $78.25367$ et le graphique de dépendance des $4$ coefficients entre eux suivant : 
+
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=290px]{cluster_poly_1}
+  \caption{\label{fig:reg_exp_clust} Clustering sur mod\`ele polynomial de degr\'e $3$ avec courbes liss\'ees}
+\end{figure}
+
+
+Apr\'es reclassement des puits  '$Well-257$', '$Well-250$', '$Well-333$', '$Well-266$' on obtient un AIC de $64.16384$ et plus que $6$ courbes mal class\'ees en faisant une nouvelle r\'egression logistique, soit $2$ courbes dont la classe pr\'edite a cette fois-ci \'et\'e \'egale \'a celle observ\'ee.
+
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=290px]{cluster_poly_2}
+  \caption{\label{fig:reg_exp_clust} Clustering sur mod\`ele polynomial de degr\'e $3$ avec courbes liss\'ees et reclassement}
+\end{figure}
 
 \section*{Acknowledgments}
 Nos remerciements vont \`a Fran\c cois Wahl pour l'enseignement de son cours "Mod\`eles de r\'egression" \'a l'Universit\'e Claude Bernard Lyon I et son accompagnement durant ce projet.
+
+
+\appendix
+\section{Code de la question 1}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=450px]{code_q1}
+  \caption{\label{fig:code_q1} Code de la question 1 des r\'egressions polynomiales}
+\end{figure}
+
+\section{Code de la question 2}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q2_1}
+  \caption{\label{fig:code_q2_1} Code de la question 2 des r\'egressions exponentielles, partie 1}
+\end{figure}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q2_2}
+  \caption{\label{fig:code_q2_2} Code de la question 2 des r\'egressions exponentielles, partie 2}
+\end{figure}
+
+\section{Code de la question 3}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q3_1}
+  \caption{\label{fig:code_q3_1} Code de la question 3 des intervalles de confiance, partie 1}
+\end{figure}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q3_2}
+  \caption{\label{fig:code_q3_2} Code de la question 3 des intervalles de confiance, partie 2}
+\end{figure}
+
+\section{Code de la question 4}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q1}
+  \caption{\label{fig:code_q4} Code de la question 4 des reclassements de courbes apr\`es r\'egression logistique}
+\end{figure}
+
+\section{Code de la question 5}
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=600px]{code_q1}
+  \caption{\label{fig:code_q5} Code de la question 5 des lissages de spikes puis des reclassements de courbes}
+\end{figure}
 
 \end{document}

@@ -4,3 +4,8 @@
 \contentsline {section}{\numberline {3}Courbes hautes et basses \`a 95\%}{5}{section.3}
 \contentsline {section}{\numberline {4}Reclassement avec r\'egression logistique}{6}{section.4}
 \contentsline {section}{\numberline {5}Gestion des spikes et lissage des courbes}{8}{section.5}
+\contentsline {section}{\numberline {A}Code de la question 1}{11}{appendix.A}
+\contentsline {section}{\numberline {B}Code de la question 2}{12}{appendix.B}
+\contentsline {section}{\numberline {C}Code de la question 3}{14}{appendix.C}
+\contentsline {section}{\numberline {D}Code de la question 4}{15}{appendix.D}
+\contentsline {section}{\numberline {E}Code de la question 5}{16}{appendix.E}
