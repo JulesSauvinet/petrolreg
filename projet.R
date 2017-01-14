@@ -9,8 +9,8 @@ library(boot)
 library(kernlab)
 
 
-#setwd("..\\..\\Projects\\petrolreg")
-setwd("documents\\M2\\regression\\projet\\petrolreg")
+setwd("..\\..\\Projects\\petrolreg")
+#setwd("documents\\M2\\regression\\projet\\petrolreg")
 getwd()
 
 #récupération des données du fichier EXCEL
@@ -425,6 +425,9 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
   clustering <- multinom(col ~ k0 + k1, data = kcoefs)
   summary(clustering)
   
+  names = character(75)
+  names <- lapply(datapuits$V1, as.character)
+  
   kcoefs$names <- names
   kcoefs$model <- clustering
   
@@ -465,15 +468,15 @@ kcoefs = improvePredict()
 # On a 16 courbes mal prédites. On en sélectionne 5.
 
 # Courbe n°75
-removePoint(badClass, 288)
+badClass = removePoint(badClass, 288)
 # Courbe n°47
-removePoint(badClass, 333)
+badClass = removePoint(badClass, 333)
 # Courbe n°39
-removePoint(badClass, 246)
+badClass = removePoint(badClass, 246)
 # Courbe n°53
-removePoint(badClass, 257)
+badClass = removePoint(badClass, 257)
 # Courbe n°11
-removePoint(badClass, 258)
+badClass = removePoint(badClass, 258)
 
 
 # # Courbe n°75
@@ -552,7 +555,7 @@ seq2 <- 1:75
 #polynomial de degré 3
 r2p3 <- numeric(1)
 for (i in seq2){
-  
+  i=1
   #l'abscisse
   mois <- 1:35
   
@@ -640,6 +643,246 @@ for (i in seq2){
 #moyenne du rsquared
 r2e3=r2e3/i
 r2e3
+
+# -------------------------------------------------
+# On relance le clustering avec les données lissées
+# -------------------------------------------------
+
+# Exonentielle
+improvePredict2 <- function(colorsPred = c(), badClass = c()){
+  #On stocke les valeurs de k0, k1 et la classe (couleur)
+  k0s <- numeric(75)
+  k1s <- numeric(75)
+  colors <- numeric(75)
+  par(mfrow=c(1,1))
+  r2e1 <- numeric(1)
+  for(i in seq2){
+    mois <- 1:35
+    v <- as.vector(puits[,i])
+    
+    col="black"
+    if (v[36] == "Good"){
+      if(i %in% badClass){
+        col = kcoefs$colPred[i]
+      } else {
+        col = "red"
+      }
+    }else if (v[36] == "medium"){
+      if(i %in% badClass){
+        col = kcoefs$colPred[i]
+      } else {
+        col = "green"
+      }
+    }else {
+      if(i %in% badClass){
+        col = kcoefs$colPred[i]
+      } else {
+        col = "blue"
+      }
+    }
+    
+    v <- as.numeric(v[1:35])
+    
+    smooth <- loess(v~mois)
+    
+    nd2 <- which(smooth$fitted <= 0)
+    smooth$fitted <- smooth$fitted[smooth$fitted > 0]
+    mois <- mois[!mois %in%  nd2]
+    
+    expfit <- lm(log(smooth$fitted) ~ mois)
+    summary(expfit)
+    
+    
+    k0i = exp(expfit$coefficients[1])
+    k1i = -expfit$coefficients[2]
+    k0s[i] = k0i
+    k1s[i] = k1i
+    colors[i] = col
+    
+    rsquared = summary(expfit)$adj.r.squared
+    r2e1=r2e1+summary(expfit)$adj.r.squared
+  }
+  
+  r2e1=r2e1/i
+  r2e1
+  kcoefs <- c()
+  kcoefs$k0 <- k0s
+  kcoefs$k1 <- k1s
+  kcoefs$col <- colors
+  
+  clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+  summary(clustering)
+  
+  names = character(75)
+  names <- lapply(datapuits$V1, as.character)
+  
+  kcoefs$names <- names
+  kcoefs$model <- clustering
+  
+  kcoefs$colPred <- clustering$lev[predict(clustering)]
+  
+  # Compter les courbes mal classées
+  count=0
+  if(length(kcoefs$colPred) > 0){
+    for(i in 1:75){
+      if (kcoefs$col[i] != kcoefs$colPred[i]){
+        count=count + 1
+      }
+    }
+  }
+  kcoefs$badPredictCount <- count
+  kcoefs$correctedPoints <- length(badClass)
+  
+  plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 en fonction de k0")
+  lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+  text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
+  
+  
+  print(kcoefs$badPredictCount)
+  print(kcoefs$correctedPoints)
+  
+  return(kcoefs)
+}
+
+removePoint2 <- function(badClass, pointNumber){
+  badClass=c(badClass, which(kcoefs$names == paste("Well", pointNumber, sep="-")))
+  kcoefs = improvePredict2(colorsPred = kcoefs$colPred,badClass = badClass)
+  return (badClass)
+}
+
+badClass=c()
+kcoefs = improvePredict2()
+
+# On a 16 courbes mal prédites. On en sélectionne 5.
+
+badClass = removePoint2(badClass, 246)
+badClass = removePoint2(badClass, 258)
+badClass = removePoint2(badClass, 290)
+badClass = removePoint2(badClass, 268)
+badClass = removePoint2(badClass, 288)
+
+
+
+# Polynôme de degré 3
+# improvePredict3 <- function(colorsPred = c(), badClass = c()){
+#   #On stocke les valeurs de k0, k1 et la classe (couleur)
+#   k0s <- numeric(75)
+#   k1s <- numeric(75)
+#   colors <- numeric(75)
+#   par(mfrow=c(1,1))
+#   r2e1 <- numeric(1)
+#   for(i in seq2){
+#     mois <- 1:35
+#     v <- as.vector(puits[,i])
+#     
+#     col="black"
+#     if (v[36] == "Good"){
+#       if(i %in% badClass){
+#         col = kcoefs$colPred[i]
+#       } else {
+#         col = "red"
+#       }
+#     }else if (v[36] == "medium"){
+#       if(i %in% badClass){
+#         col = kcoefs$colPred[i]
+#       } else {
+#         col = "green"
+#       }
+#     }else {
+#       if(i %in% badClass){
+#         col = kcoefs$colPred[i]
+#       } else {
+#         col = "blue"
+#       }
+#     }
+#     
+#     v <- as.numeric(v[1:35])
+#     
+#     nd <- which(v %in% 0)
+#     v <- v[v != 0]
+#     mois <- mois[!mois %in%  nd]
+#     
+#     smooth <- loess(v~mois)
+#     fit3 <- lm(smooth$fitted ~ poly(mois, 3, raw=TRUE))
+#     
+#     
+#     k0i = exp(expfit$coefficients[1])
+#     k1i = -expfit$coefficients[2]
+#     k0s[i] = k0i
+#     k1s[i] = k1i
+#     colors[i] = col
+#     
+#     rsquared = summary(expfit)$adj.r.squared
+#     r2e1=r2e1+summary(expfit)$adj.r.squared
+#   }
+#   
+#   r2e1=r2e1/i
+#   r2e1
+#   kcoefs <- c()
+#   kcoefs$k0 <- k0s
+#   kcoefs$k1 <- k1s
+#   kcoefs$col <- colors
+#   
+#   clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+#   summary(clustering)
+#   
+#   names = character(75)
+#   names <- lapply(datapuits$V1, as.character)
+#   
+#   kcoefs$names <- names
+#   kcoefs$model <- clustering
+#   
+#   kcoefs$colPred <- clustering$lev[predict(clustering)]
+#   
+#   # Compter les courbes mal classées
+#   count=0
+#   if(length(kcoefs$colPred) > 0){
+#     for(i in 1:75){
+#       if (kcoefs$col[i] != kcoefs$colPred[i]){
+#         count=count + 1
+#       }
+#     }
+#   }
+#   kcoefs$badPredictCount <- count
+#   kcoefs$correctedPoints <- length(badClass)
+#   
+#   plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 en fonction de k0")
+#   lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+#   text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
+#   
+#   
+#   print(kcoefs$badPredictCount)
+#   print(kcoefs$correctedPoints)
+#   
+#   return(kcoefs)
+# }
+# 
+# removePoint3 <- function(badClass, pointNumber){
+#   badClass=c(badClass, which(kcoefs$names == paste("Well", pointNumber, sep="-")))
+#   kcoefs = improvePredict3(colorsPred = kcoefs$colPred,badClass = badClass)
+#   return (badClass)
+# }
+# 
+# badClass=c()
+# kcoefs = improvePredict3()
+# 
+# # On a 16 courbes mal prédites. On en sélectionne 5.
+# 
+# # Courbe n°75
+# badClass = removePoint3(badClass, 288)
+# # Courbe n°47
+# badClass = removePoint3(badClass, 333)
+# # Courbe n°39
+# badClass = removePoint3(badClass, 246)
+# # Courbe n°53
+# badClass = removePoint3(badClass, 257)
+# # Courbe n°11
+# badClass = removePoint3(badClass, 258)
+
+
+
+
+
 
 
 ###################################

@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 \usepackage[french]{babel}
-\usepackage[utf8x]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage[colorinlistoftodos]{todonotes}
@@ -93,7 +93,7 @@ Fran\c cois \textsc{Wahl} % Supervisor's Name
 
 \begin{abstract}
 L'objectif est d'effectuer des r\'egressions des valeurs d'extractions des puits de p\'etrole du Canada afin de pouvoir pr\'edire les futures donn\'ees d'extraction. 
-Les courbes des valeurs des donn\'ees d'extraction donne une classification de la qualit\'e des puits.
+Les courbes des valeurs des donn\'ees d'extraction donnent une classification de la qualit\'e des puits. L'\'etiquetage de la qualit\'e de chaque puits \`a \'et\'e effectu\'e par des experts. 
 L'objectif de ce travail est de mettre en place une classification automatique de ces puits: La
 d\'emarche propos\'ee est d\'ecrite ci-dessous.
 L'id\'ee est de remplacer ces courbes par des fonctions param\'etriques.
@@ -141,7 +141,7 @@ La moyenne des R-Squared ajusted pour les $75$ courbes pour les $5$ types de r\'
 $0.0000000$, $0.4853609$, $0.6622269$, $0.7202006$ et $0.7557633$.
 \newline
 ~\\
-On voit que plus le degr\'e du polynome augmente, plus la r\'egression est de qualit\'e au cri\`ere du R-Squared (les valeurs pr\'edites se rapprochent des valeurs des observations).
+On voit que plus le degr\'e du polynome augmente, plus la r\'egression est de qualit\'e au crit\`ere du R-Squared (les valeurs pr\'edites se rapprochent des valeurs des observations).
 
 Si on se r\'ef\`ere \`a la figure ci-dessus, on observe que la plupart des simulations
 pr\'esente une remont\'ee au bout de quelques mois, que certaines simulations sont concaves
@@ -155,7 +155,7 @@ au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir de
 Une id\'ee simple pour corriger ces d\'efauts est d'utiliser une autre forme param\'etrique pour
 les simulations. Une suggestion imm\'ediate pour qui a un peu l'habitude de ces courbes est
 une forme exponentielle du style : o\'u $y$ est la production, $t$ le mois, et $k0$ et
-$k1$ deux param\`etres \'a d\'eterminer.
+$k1$ deux param\`etres \`a d\'eterminer.
 
 \textbf{R\'egression exponentielle $log(y)=ax+b$}
 
@@ -174,15 +174,15 @@ $k1$ deux param\`etres \'a d\'eterminer.
   \caption{\label{fig:exponential_reg_nls} Courbes ajust\'ees avec une fonction exponentielle et l'outil nls de R}
 \end{figure}
 
-La r\'egression $log(y)=ax+b$ faîte avec lm est mieux, on s'int\'eressera donc \'a celle-ci.
+La r\'egression $log(y)=ax+b$ faite avec lm est mieux, on s'int\'eressera donc \`a celle-ci.
 
 Est-ce que cela marche ?
 \newline 
-La moyenne du "ajusted R-Squared" pour les $75$ r\'egressions exponentielles est cette fois-ci de $0.6754964$, donc de moins bonne quali\'e \'a priori que les r\'egressions polynomiales de degr\'e sup\'erieures ou \'egale \'a $3$. 
+La moyenne du "ajusted R-Squared" pour les $75$ r\'egressions exponentielles est cette fois-ci de $0.6754964$, donc de moins bonne quali\'e \`a priori que les r\'egressions polynomiales de degr\'e sup\'erieures ou \'egale \`a $3$. 
 \newline
-N\'eanmoins, quand on s'int\'eresse au d\'etail des R-Squared, on trouve de tr\'es bonne r\'egressions avec un R-Squared tr\`es bon comme des r\'egressions avec un R-Squared tr\`es mauvais. Cela est probablement d\^u à certaines valeurs "outliers" qui ne permettent pas \'a la fonction exponentielle de s'adapter aux courbes. 
+N\'eanmoins, quand on s'int\'eresse au d\'etail des R-Squared, on trouve de tr\`es bonne r\'egressions avec un R-Squared tr\`es bon comme des r\'egressions avec un R-Squared tr\`es mauvais. Cela est probablement d\^u à certaines valeurs "outliers" qui ne permettent pas \`a la fonction exponentielle de s'adapter aux courbes. 
 \newline
-La partie $5$ et le lissage des courbes permettra de pallier \'a ce probl\`eme et de probablement monter que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
+La partie $5$ et le lissage des courbes permettra de pallier \`a ce probl\`eme et de probablement montrer que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
 \newline
 ~\\
 $10$ premiers R-Squared : 
@@ -197,11 +197,11 @@ Ou bien une compos\'ee de polyn\^ome dans un logarithme.
 
 \newpage
 
-\section{Courbes hautes et basses \'a 95\%}
+\section{Courbes hautes et basses \`a 95\%}
 
 Quelles sont les incertitudes sur les r\'egressions des points 2 ? Plus concr\`etement, on
-vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute (\'a
-95\%) et la courbe basse (toujours \'a 95\%)
+vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute (\`a
+95\%) et la courbe basse (toujours \`a 95\%)
 
 \textbf{Intervalles de confiance avec nls}
 
@@ -230,7 +230,7 @@ certaines 'bad' pourraient \^etre aussi 'medium'.
 Avez-vous des suggestions sur 5 courbes au
 plus qui pourraient \^etre mal class\'ees ? 
 \newline
-Justifiez vos choix (i.e. une fa\c con de faire estd'effectuer une r\'egression logistique dont le y est la classe pr\'edite par l'expert et les $x$ sont les coefficients $k0$ et $k1$, et d'examiner comment la r\'egression est am\'elior\'ee en changeant la
+Justifiez vos choix (i.e. une fa\c con de faire est d'effectuer une r\'egression logistique dont le y est la classe pr\'edite par l'expert et les $x$ sont les coefficients $k0$ et $k1$, et d'examiner comment la r\'egression est am\'elior\'ee en changeant la
 classe d'un point).
 
 \textbf{Clustering des courbes en fonction de $k0$ et $k1$ avant reclassement}
@@ -241,7 +241,7 @@ classe d'un point).
   \caption{\label{fig:k0_k1} Coefficients $k1$ en fonction de $k0$ et classes des courbes}
 \end{figure}
 
-La couleur du ext\'erieur est la classe de d\'epart (observ\'ee) et le rond int\'erieur est sa classe pr\'edite.
+La couleur du cercle ext\'erieur est la classe de d\'epart (observ\'ee) et le cercle int\'erieur est sa classe pr\'edite.
 \newline 
 $16$ courbes sont mal class\'ees d'apr\`es les pr\'edictions.
 
@@ -249,9 +249,8 @@ L'AIC de la r\'egression est de $74.63465$.
 
 Apr\`es plusieurs tests de changements de courbes et de comparaison d'AIC, on change la classe de $5$ puits :
 \newline
-Les courbes des puits '$Well-333$' de bad à médium, '$Well-288$' de good à médium,
-'$Well-280$' de bad à médium, '$Well-257$' de good à médium, et '$Well-258$' de bad à médium, et la courbe '$Well-308$' 
-de médium à good.
+Les courbes des puits '$Well-288$' de good à médium, '$Well-333$' de bad à médium,
+'$Well-246$' de médium à bad, '$Well-257$' de good à médium, et '$Well-258$' de bad à médium.
 
 \newpage 
 
@@ -275,10 +274,10 @@ L'AIC de la r\'egression est de $52.52519$.
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
 	\includegraphics[width=250px]{reg_pol3_smooth_loess}
-  \caption{\label{fig:reg_pol3_smooth_loess} R\'egression polynomiale de degr\'e 3 avec courbes liss\'ee au pr\'ealable avec loess}
+  \caption{\label{fig:reg_pol3_smooth_loess} R\'egression polynomiale de degr\'e 3 avec courbes liss\'ees au pr\'ealable avec loess}
 \end{figure}
 
-On obtient une moyenne de R-Squared de $0.9802724$ cette fois-ci apr\`es lissage des courbes. La r\'egression polynomiale devient ainsi tr\`es performante. Il reste \`a savoir si l'on peut se permettre l'approximation fa\^ite par le lissage des courbes et si les valeurs induites par les spikes avait une pertinence intransigible. 
+On obtient une moyenne de R-Squared de $0.9802724$ cette fois-ci apr\`es lissage des courbes. La r\'egression polynomiale devient ainsi tr\`es performante. Il reste \`a savoir si l'on peut se permettre l'approximation faite par le lissage des courbes et si les valeurs induites par les spikes avaient une pertinence intransigible. 
 \newline
 Toutefois, la r\'egression avec smooth ne r\`egle pas les valeurs qui remontent, les simulations concaves au lieu d'\^etre convexes, et les potentielles valeurs n\'egatives autour des $35$ mois.
 
@@ -292,6 +291,12 @@ Toutefois, la r\'egression avec smooth ne r\`egle pas les valeurs qui remontent,
 
 On obtient une moyenne de R-Squared de $0.7569813$ cette fois-ci apr\`es lissage des courbes. La r\'egression est sensiblement am\'elior\'ee avec le lissage des courbes mais reste moins efficace que la r\'egression polynomiale de degr\'e 3.
 
+\begin{figure}[H]
+ \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
+	\includegraphics[width=500px]{smooth_clustering_exp}
+  \caption{\label{fig:reg_exp_smooth_loess} Clustering sur modèle exponentiel avec courbes liss\'ee}
+\end{figure}
+
 \newpage
 
 \section{Conclusion}
@@ -300,6 +305,6 @@ TODO TOO
 
 
 \section*{Acknowledgments}
-Merci \'a Fran\c cois Wahl.
+Merci \`a Fran\c cois Wahl.
 
 \end{document}
