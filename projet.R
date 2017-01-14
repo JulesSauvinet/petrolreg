@@ -341,8 +341,6 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
     mois <- mois[!mois %in%  nd]
     
     expfit <- lm(log(v) ~ mois)
-    summary(expfit)
-    
     
     k0i = exp(expfit$coefficients[1])
     k1i = -expfit$coefficients[2]
@@ -355,7 +353,6 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
   }
   
   r2e1=r2e1/i
-  r2e1
   kcoefs <- c()
   kcoefs$k0 <- k0s
   kcoefs$k1 <- k1s
@@ -364,7 +361,6 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
   clustering <- multinom(col ~ k0 + k1, data = kcoefs)
   summary(clustering)
   
-  names = character(75)
   names <- lapply(datapuits$V1, as.character)
   
   kcoefs$names <- names
@@ -376,9 +372,7 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
   count=0
   if(length(kcoefs$colPred) > 0){
     for(i in 1:75){
-      if (kcoefs$col[i] != kcoefs$colPred[i]){
-        count=count + 1
-      }
+      if (kcoefs$col[i] != kcoefs$colPred[i]){count=count + 1}
     }
   }
   kcoefs$badPredictCount <- count
@@ -387,7 +381,6 @@ improvePredict <- function(colorsPred = c(), badClass = c()){
   plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 en fonction de k0")
   lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
   text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
-  
   
   print(kcoefs$badPredictCount)
   print(kcoefs$correctedPoints)
@@ -419,7 +412,10 @@ badClass = removePoint(badClass, 258)
 
 
 
-#5) Gestion des spikes (smoothing curves) 
+
+#################################################################
+##   QUESTION   5   -   Gestion des spikes (smoothing curves)  ##
+#################################################################
 
 #fait avec loess
 seq1 <- 0:4
@@ -428,11 +424,7 @@ seq2 <- 1:75
 #polynomial de degré 3
 r2p3 <- numeric(1)
 for (i in seq2){
-  i=1
-  #l'abscisse
   mois <- 1:35
-  
-  #on récupère les données du puits i
   v <- as.vector(puits[,i])
   
   #la couleur en fonction de la classification de qualité
@@ -446,7 +438,6 @@ for (i in seq2){
   
   v <- as.numeric(v[1:35])
   
-  #on plot pas les 0 qui sont des ND (d'apres moi)
   nd <- which(v %in% 0)
   v <- v[v != 0]
   mois <- mois[!mois %in%  nd]
