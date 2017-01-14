@@ -28,8 +28,7 @@ puits
 #Régressions polynomiales
 
 par(mfrow=c(2,3))
-
-#on va tracer 5 graphiques
+#on va tracer 6 graphiques
 seq1 <- -1:4
 #les 75 puits
 seq2 <- 1:75
@@ -63,7 +62,7 @@ for (j in seq1){
     #tracé de la figure 1 : les données de production
     if (j==-1){
       if (i==1){
-        plot(mois,v,type="l",col=col, ylab="gas prod", main="Les courbes non fittées",ylim=c(0,max(v)+10))
+        plot(mois,v,type="l",col=col, ylab="production simulée", main="Les courbes non ajustées",ylim=c(0,max(v)+10))
       }
       lines(mois,v,type="l",col=col) 
 
@@ -77,9 +76,9 @@ for (j in seq1){
         fit2 <- lm(v ~ poly(mois, j, raw=TRUE))
       }
       if (i==1){
-        plot(mois, predict(fit2), type="l",col=col, ylab="gas prod", lwd=1, main=paste("Régression polynomiale de degré ",j), ylim=c(0,max(predict(fit2))+10))
+        plot(mois, predict(fit2), type="l",col=col, ylab="production simulée", lwd=1, main=paste("Ajustement par un polynôme de degré ",j), ylim=c(0,max(predict(fit2))+10))
       }
-      lines(mois, predict(fit2), col=col, ylab="gas prod", lwd=1)
+      lines(mois, predict(fit2), col=col, lwd=1)
     }
     if (j >= 0) {
       r2j=r2j+summary(fit2)$adj.r.squared
@@ -124,9 +123,16 @@ for (i in seq2){
   expfit <- lm(log(v) ~ mois)
   
   # tracé de la figure 1 : les données de production 
-  if (i==1){
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod",
-         main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10)) 
+  if (i==3){
+    
+    residus=v-exp(expfit$fitted.values)
+    plot(v,residus, main=paste("Graphique des résidus de la régression exponentielle")
+         , xlab="production simulée", ylab="résidus")
+    #text(v, residus, labels=names, cex= 0.7, pos=3)
+    
+    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="production simulée",
+         main=paste("Régression exponentielle"),ylim=c(0,max(exp(predict(expfit)))+10))
+    
   }
   else {
     lines(mois,exp(predict(expfit)),type="l",col=col)
@@ -186,7 +192,8 @@ for (i in seq2){
   colors[i] = col
   
   if (i==1){
-    plot(df$mois,predict(m),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle"),ylim=c(0,max(predict(m))+10))
+    
+    plot(df$mois,predict(m),type="l",col=col, ylab="production simulée", xlab="mois", main=paste("Régression exponentielle"),ylim=c(0,max(predict(m))+10))
   }
   lines(df$mois,predict(m),type="l",col=col)
   

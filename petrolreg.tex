@@ -108,10 +108,7 @@ Pour cela, plusieurs r\'egressions vont \^etre envisag\'ees afin d'avoir la meil
 
 \textbf{TODOLIST}
 \begin{itemize}
-	\item GRAPHIQUES DE RESIDU POUR EVALUER QUALITE REGRESSIONS
 	\item EXPLICATIONS
-	\item BOOTSTRAP CORRECTEMENT
-	\item AICs
 \end{itemize}
 
 \newpage
@@ -160,24 +157,24 @@ les simulations. Une suggestion imm\'ediate pour qui a un peu l'habitude de ces 
 une forme exponentielle du style : o\'u $y$ est la production, $t$ le mois, et $k0$ et
 $k1$ deux param\`etres \'a d\'eterminer.
 
-\textbf{R\'egression exponentielle avec lm}
+\textbf{R\'egression exponentielle $log(y)=ax+b$}
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
-	\includegraphics[width=320px]{reg_exp_1}
-  \caption{\label{fig:exponential_reg_lm} Courbes r\'egress\'ees avec une fonction exponentielle et et la fonction lm de R}
+	\includegraphics[width=290px]{reg_exp_1}
+  \caption{\label{fig:exponential_reg_lm} Courbes ajust\'ees avec une fonction exponentielle et l'outil lm de R}
 \end{figure}
 
 
-\textbf{R\'egression exponentielle avec nls}
+\textbf{R\'egression exponentielle $y=k_{0}e^{-k_{1}x}$}
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
-	\includegraphics[width=320px]{reg_exp_2}
-  \caption{\label{fig:exponential_reg_nls} Courbes r\'egress\'ees avec une fonction exponentielle et et la fonction nls de R}
+	\includegraphics[width=290px]{reg_exp_2}
+  \caption{\label{fig:exponential_reg_nls} Courbes ajust\'ees avec une fonction exponentielle et l'outil nls de R}
 \end{figure}
 
-La r\'egression avec lm est mieux, on s'int\'eressera donc \'a celle-ci.
+La r\'egression $log(y)=ax+b$ faîte avec lm est mieux, on s'int\'eressera donc \'a celle-ci.
 
 Est-ce que cela marche ?
 \newline 
