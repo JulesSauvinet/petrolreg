@@ -147,7 +147,7 @@ au lieu d'\^etre convexes, voire que certaines d'entre elles pourraient avoir de
 
 Une id\'ee simple pour corriger ces d\'efauts est d'utiliser une autre forme param\'etrique pour
 les simulations. Une suggestion imm\'ediate pour qui a un peu l'habitude de ces courbes est
-une forme exponentielle du style : o\'u $y$ est la production, $t$ le mois, et $k0$ et
+une forme exponentielle du style : $y=k_{0}.e^{-k_{1}.t}$ où $y$ est la production, $t$ le mois, et $k0$ et
 $k1$ deux param\`etres \`a d\'eterminer.
 
 \textbf{R\'egression exponentielle $log(y)=ax+b$}
@@ -159,7 +159,7 @@ $k1$ deux param\`etres \`a d\'eterminer.
 \end{figure}
 
 
-\textbf{R\'egression exponentielle $y=k_{0}e^{-k_{1}x}$}
+\textbf{R\'egression exponentielle $y=k_{0}.e^{-k_{1}.x}$}
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
@@ -167,23 +167,28 @@ $k1$ deux param\`etres \`a d\'eterminer.
   \caption{\label{fig:exponential_reg_nls} Courbes ajust\'ees avec une fonction exponentielle et l'outil nls de R}
 \end{figure}
 
-La r\'egression $log(y)=ax+b$ faite avec lm est mieux, on s'int\'eressera donc \`a celle-ci.
+La r\'egression $log(y)=ax+b$ faite avec lm est plus fidèle aux données, on s'int\'eressera donc \`a celle-ci.
 \newline 
 
 La moyenne du "ajusted R-Squared" pour les $75$ r\'egressions exponentielles est cette fois-ci de $0.6754964$, donc de moins bonne quali\'e \`a priori que les r\'egressions polynomiales de degr\'e sup\'erieures ou \'egale \`a $3$. 
 \newline
 N\'eanmoins, quand on s'int\'eresse au d\'etail des R-Squared, on trouve de tr\`es bonne r\'egressions avec un R-Squared tr\`es bon comme des r\'egressions avec un R-Squared tr\`es mauvais. Cela est probablement d\^u à certaines valeurs "outliers" qui ne permettent pas \`a la fonction exponentielle de s'adapter aux courbes. 
 \newline
-La partie $5$ et le lissage des courbes permettra de pallier \`a ce probl\`eme et de probablement montrer que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
+La partie $5$ et le lissage des courbes permettra de pallier ce probl\`eme et probablement de montrer que la r\'egression exponentielle est adapt\'ee si un travail d'att\'enuation des "pics" est fait au pr\'ealable.
 \newline
+
 ~\\
 $10$ premiers R-Squared : 
 \newline
 $0.8011383$, $0.4182548$, $0.7403922$, $0.7585257$, $0.4186529$, $0.6888943$, $0.3297291$, $0.818889$, $0.7745934$ et $0.7527809$.
+\newline
+
+On peut d'ores et déjà constater que les trois classes de puits définies par les experts sont visuellement distinguables, bien qu'un peu entremêlées. Ceci indique qu'il sera possible de mettre en place un modèle de classification des puits.
+\newline
 
 \textbf{Autres possibilit\'es}
 \newline
-Nous avons pens\'e a un ajustement par fonction inverse ou avec une gaussienne.
+Nous avons pens\'e a un ajustement par fonction inverse du type $y = \frac{a}{x} + b$ avec $y$ la production, $x$ le mois et $a$ et $b$ des constantes à déterminer. On peut aussi penser à une gaussienne, dont l'allure s'approche de celles des courbes.
 
 
 
@@ -211,7 +216,7 @@ vous demande de tracer pour un exemple de chaque type de courbe, la courbe haute
   \caption{\label{fig:q3_predict_lm} Courbes hautes et basses à 95\% pour un exemple de chaque classe de courbes}
 \end{figure}
 
-Comme le montre les figures ci-dessus, il y a davantage d'incertitude sur les valeurs des courbes de qualit\'e 'bad' et 'm\'edium'. Cela induit que les valeurs de ces courbes suivent des tendances plus compliqu\'ees \'a ajuster. En effet, les valeurs d'extraction pour ces puits sont probablement plus impr\'evisible et suivent parfois quelques oscillations. En outre, les incertitudes aux valeurs d'extraction pour les premiers et derniers mois sont \'egalement plus fortes. 
+Comme le montre les figures ci-dessus, il y a davantage d'incertitude sur les valeurs des courbes de qualit\'e 'bad' et 'm\'edium'. Cela induit que les valeurs de ces courbes suivent des tendances plus compliqu\'ees à ajuster. En effet, les valeurs d'extraction pour ces puits sont probablement plus impr\'evisible et suivent parfois quelques oscillations. En outre, les incertitudes aux valeurs d'extraction pour les premiers et derniers mois sont \'egalement plus fortes. 
 
 
 \newpage
@@ -231,23 +236,31 @@ classe d'un point).
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
-	\includegraphics[width=250px]{clustering}
+	\includegraphics[width=300px]{clustering}
   \caption{\label{fig:k0_k1} Coefficients $k1$ en fonction de $k0$ et classes des courbes}
 \end{figure}
 
-La couleur du cercle ext\'erieur est la classe de d\'epart (observ\'ee) et le cercle int\'erieur est sa classe pr\'edite.
+La couleur du cercle ext\'erieur est la classe donnée par les experts et le cercle int\'erieur est sa classe pr\'edite par le classifieur.
 \newline 
 $16$ courbes sont mal class\'ees d'apr\`es les pr\'edictions et l'AIC de la r\'egression est de $74.63465$. 
+\newline 
+On essaye d'améliorer le taux du classifieur en modifiant la classe prédite par les experts sur certaines courbes.
+\newline 
 
-
-\newpage 
-
-On change la classe de $5$ puits. 
+On change ainsi la classe de $5$ puits. 
 \newline
-On se limite au reclassement $5$ puits car on ne veut pas trop modifier le mod\`ele de d\'epart et laisser de la souplesse au classifieur si celui-ci doit traiter la classification de nouveaux puits \'a l'avenir.
+On se limite au reclassement de $5$ puits car on ne veut pas trop modifier le mod\`ele de d\'epart et laisser de la souplesse au classifieur si celui-ci doit traiter la classification de nouveaux puits à l'avenir.
 \newline
 
-Apr\'es interpr\'etations graphiques et des tests de pr\'ediction de classe avec ou sans changement de classe des $16$ puits mal class\'es, on d\'etermine les $5$ puits qui r\'eajuste mieux de mod\'ele et am\'eliore le classifieur :
+On procède de manière itérative. On choisit un puits qui semble très éloigné du reste de sa classe et on change sa classe donnée par les experts pour celle prédite par le classifieur. On relance le modèle du classifieur sur cette nouvelle base de données. On compte les points mal classés avec ce nouveau classifieur. Si le puits choisi ne diminue pas le nombre de points bien classés, on lui réattribue sa valeur originelle et on choisit un autre point. Quand on troive un point qui convient, on répète ces opérations jusqu'à atteindre 5 points.
+\newline
+
+On aurait pu automatiser cette opération qui est un problème d'optimisation simple. Ce problème peut se résumer par la phrase suivante :
+\newline
+\textit{Trouver la séquence de 5 puits qui minimise le nombre de puits mal classés}
+\newline
+
+Apr\'es interpr\'etations graphiques et des tests de pr\'ediction de classe avec ou sans changement de classe des $16$ puits mal class\'es, on d\'etermine les $5$ puits qui r\'eajustent au mieux le mod\'ele et am\'eliorent le classifieur :
 \newline
 Les courbes des puits '$Well-288$' de good à médium, '$Well-333$' de bad à médium, '$Well-246$' de médium à bad, '$Well-257$' de good à médium, et '$Well-258$' de bad à médium.
 
@@ -260,7 +273,9 @@ Les courbes des puits '$Well-288$' de good à médium, '$Well-333$' de bad à m�
 \end{figure}
 
 L'AIC de la r\'egression est de $52.52519$ et il n'y a plus que $10$ courbes mal class\'ees pour $5$ de chang\'ees sur les $16$ de d\'epart. Soit $1$ courbe qui dont la pr\'ediction de classe par le classifieur s'est accord\'ee sur sa vraie classe. 
+\newline
 
+A présent que nous avons établi un classifieur, nous pouvons nous demander s'il est possible d'en améliorer la précision. On peut par exemple tenter de produire un meilleur modèle sur les données en lissant les courbes avant d'effectuer la régression.
 
 \newpage
 
@@ -292,7 +307,7 @@ On obtient une moyenne de R-Squared de $0.7569813$ cette fois-ci apr\`es lissage
 
 \textbf{Reclassemement apr\`es lissage des courbes et ajustement exponentiel}
 
-On effectue \'a nouveau une r\'egression logistique \'a partir des courbes liss\'ees comme \'a la question $4$.
+On effectue à nouveau une r\'egression logistique à partir des courbes liss\'ees comme à la question $4$.
 On obtient cette toujours $16$ courbes mal class\'ees, un AIC de $85$ et le graphique suivant : 
 
 \begin{figure}[H]
@@ -301,8 +316,8 @@ On obtient cette toujours $16$ courbes mal class\'ees, un AIC de $85$ et le grap
   \caption{\label{fig:reg_exp_clust} Clustering sur mod\`ele exponentiel avec courbes liss\'ee}
 \end{figure}
 
-On se limite comme dans la partie $3$ \'a seulement $5$ reclassement de courbes.
-Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well-288$', '$Well-258$', on obtient un AIC de $56$ et plus que $8$ courbes mal classements en faisant une nouvelle r\'egression logistique, soit $3$ courbes dont la classe a  pr\'edite a fois-ci ont \'et\'e \'egale \'a celle observ\'ee.
+On se limite comme dans la partie $3$ à seulement $5$ reclassement de courbes.
+Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well-288$', '$Well-258$', on obtient un AIC de $56$ et plus que $8$ courbes mal classements en faisant une nouvelle r\'egression logistique, soit $3$ courbes dont la classe a  pr\'edite a fois-ci ont \'et\'e \'egale à celle observ\'ee.
 
 \begin{figure}[H]
  \centering % avoid the use of \begin{center}...\end{center} and use \centering instead (more compact)
@@ -313,6 +328,6 @@ Apr\'es reclassement des puits  '$Well-290$', '$Well-333$', '$Well-312$', '$Well
 
 
 \section*{Acknowledgments}
-Nos remerciements vont \`a Fran\c cois Wahl pour l'enseignement de son cours "Mod\`eles de r\'egression" \'a l'Universit\'e Claude Bernard Lyon I et son accompagnement durant ce projet.
+Nos remerciements vont à Fran\c cois Wahl pour l'enseignement de son cours "Mod\`eles de r\'egression" à l'Universit\'e Claude Bernard Lyon I et son accompagnement durant ce projet.
 
 \end{document}
