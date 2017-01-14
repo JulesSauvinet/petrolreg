@@ -196,17 +196,17 @@ for (i in seq2){
 rse = rse / 75
 rse 
 summary(m)
-
-kcoefs <- c()
-kcoefs$k0 <- k0s
-kcoefs$k1 <- k1s
-kcoefs$col <- colors
-
-clustering <- multinom(col ~ k0 + k1, data = kcoefs)
-summary(clustering)
-
-plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
-lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+# 
+# kcoefs <- c()
+# kcoefs$k0 <- k0s
+# kcoefs$k1 <- k1s
+# kcoefs$col <- colors
+# 
+# clustering <- multinom(col ~ k0 + k1, data = kcoefs)
+# summary(clustering)
+# 
+# plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
+# lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 
 
 ###################
@@ -415,29 +415,30 @@ plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 
 lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
 text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
 
-
 kcoefs$colPred <- clustering$lev[predict(clustering)]
 kcoefs$names <- names
+
 
 # On a 16 courbes mal prédites. On en sélectionne 5.
 badClass=c()
 # Courbe n°75
 badClass=c(badClass, which(kcoefs$names == "Well-288"))#OK
-# Courbe n°30
-badClass=c(badClass, which(kcoefs$names == "Well-280"))#OK
-# Courbe n°47
-badClass=c(badClass, which(kcoefs$names == "Well-333"))#OK
 # Courbe n°53
 badClass=c(badClass, which(kcoefs$names == "Well-257"))#OK
-# Courbe n°45
-badClass=c(badClass, which(kcoefs$names == "Well-287"))#OK
-
-# Courbe n°20
-badClass=c(badClass, which(kcoefs$names == "Well-308"))
+# Courbe n°47
+badClass=c(badClass, which(kcoefs$names == "Well-333"))#OK
 # Courbe n°11
-badClass=c(badClass, which(kcoefs$names == "Well-258"))
+badClass=c(badClass, which(kcoefs$names == "Well-258"))#OK
+# Courbe n°20
+badClass=c(badClass, which(kcoefs$names == "Well-308"))#OK
 
 
+# Courbe n°30
+badClass=c(badClass, which(kcoefs$names == "Well-280"))
+# Courbe n°45
+badClass=c(badClass, which(kcoefs$names == "Well-287"))
+# Courbe n°38
+badClass=c(badClass, which(kcoefs$names == "Well-312"))
 # Courbe n°61
 badClass=c(badClass, which(kcoefs$names == "Well-290"))
 # Courbe n°21
@@ -452,8 +453,6 @@ badClass=c(badClass, which(kcoefs$names == "Well-319"))
 badClass=c(badClass, which(kcoefs$names == "Well-328"))
 # Courbe n°57
 badClass=c(badClass, which(kcoefs$names == "Well-250"))
-# Courbe n°38
-badClass=c(badClass, which(kcoefs$names == "Well-312"))
 # Courbe n°71
 badClass=c(badClass, which(kcoefs$names == "Well-301"))
 
@@ -505,7 +504,6 @@ for(i in seq2){
   rsquared = summary(expfit)$adj.r.squared
   r2e1=r2e1+summary(expfit)$adj.r.squared
 }
-
 
 r2e1=r2e1/i
 r2e1
