@@ -197,8 +197,6 @@ rse = rse / 75
 rse 
 summary(m)
 
-
-
 kcoefs <- c()
 kcoefs$k0 <- k0s
 kcoefs$k1 <- k1s
@@ -215,7 +213,9 @@ lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)]
 ##   QUESTION   3##
 ###################
 #Courbe haute + courbe basse à 95%
+#Quelles sont les incertitudes??
 
+#NLS + predict_NLS
 seq1 <- 0:4
 #les 75 premiers puits
 seq2 <- 1:75
@@ -224,7 +224,7 @@ plotGood <- TRUE
 plotMed <- TRUE
 plotBad <- TRUE
 
-par(mfrow=c(2,2))
+par(mfrow=c(2,3))
 for (i in seq2){
   mois <- 1:35
   v <- as.vector(puits[,i])
@@ -283,11 +283,7 @@ for (i in seq2){
   }
 }
 
-#quelles sont les incertitudes??
-
-
-#3) Avec Bootstrap
-
+#avec predict
 seq1 <- 0:4
 #les 75 premiers puits
 seq2 <- 1:75
@@ -312,101 +308,49 @@ for (i in seq2){
   
   expfit <- lm(log(v) ~ mois)
   
+  k0start = signif(exp(expfit$coefficients[1]), digit=4)
+  k1start = signif(-expfit$coefficients[2], digit=4)
   
-  k0start = signif(exp(expfit$coefficients[1]), digit=6)
-  k1start = signif(-expfit$coefficients[2], digit=6)
+  newdat <- data.frame(mois)  
   
   if (classif == "Good" && plotGood == TRUE){
     plotGood = FALSE
     col = "red"
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
-    v1=log(v)
-    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
-    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
+    predG = predict(expfit, newdat, interval="confidence", level=0.95)
+    epredG = exp(predG)
     
-    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
+    plot(mois,epredG[,1],type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité good avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(epredG[,1]))+10)
     
-    rownames(tab3_bis)[1]="theta"
-    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
-    
-    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
-    tab_4
-    
-    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
-    
-    l = ci[1,3]
-    u = ci[2,3]
-    
-    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
-    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,epredG[,2],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,epredG[,3],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
     
     
   }else if (classif == "medium" && plotMed == TRUE){
     plotMed = FALSE
     col = "green"
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité medium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
     
-    v1=log(v)
-    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
-    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
+    predG = predict(expfit, newdat, interval="confidence", level=0.95)
+    epredG = exp(predG)
     
-    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
+    plot(mois,epredG[,1],type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité médium avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(epredG[,1]))+10)
     
-    rownames(tab3_bis)[1]="theta"
-    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
-    
-    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
-    tab_4
-    
-    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
-    
-    l = ci[1,3]
-    u = ci[2,3]
-    
-    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
-    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
-    
+    lines(mois,epredG[,2],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,epredG[,3],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
     
   }else if (classif== "bad" && plotBad == TRUE) {
     plotBad = FALSE
     col = "blue"
     
-    plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
+    predG = predict(expfit, newdat, interval="confidence", level=0.95)
+    epredG = exp(predG)
     
-    #v_trie=sort(v) # on trie le premier éch avant de générer les 3 ech bootstrap
-    #x1=sample(v_trie,replace=T) # replace =T pour préciser avec remise
-    #x2=sample(v_trie,replace=T)
-    #x3=sample(v_trie,replace=T)
+    plot(mois,epredG[,1],type="l",col=col, ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(epredG[,1]))+10)
     
-    #tab1=cbind(y_trie,xstar1=sort(x1),xstar2=sort(x2),xstar3=sort(x3))
-    #tab2=cbind(Moyenne=apply(tab1,2,mean),Médiane=apply(tab1,2,median),Variance=apply(tab1,2,var))
-    #rownames(tab2)=c("theta","theta_star1","theta_star2","theta_star3")
-    
-    v1=log(v)
-    boot_1000=replicate(1000, sort(sample(v1,replace=T))) # générer 1000 échantillons Bootstrap
-    tab3=cbind(v1,boot_1000) #correspond à tab1 tout simplement la même commande
-    
-    tab3_bis=cbind(Moyenne=apply(tab3,2,mean),Médiane=apply(tab3,2,median),Variance=apply(tab3,2,var)) # équivalent à tab2 avec les même commande appliquée à tab3
-    
-    rownames(tab3_bis)[1]="theta"
-    rownames(tab3_bis)[-1]=paste("theta_star",1:1000,sep="")  
-    
-    tab_4=rbind(tab3_bis,theta_star=apply(tab3_bis[-1,],2,mean),sigma_star=apply(tab3_bis[-1,],2,sd))
-    tab_4
-    
-    ci = rbind(borne_inf=tab_4[1,]-qnorm(0.975)*tab_4[nrow(tab_4)],borne_sup=tab_4[1,]+qnorm(0.975)*tab_4[nrow(tab_4)])
-    
-    l = ci[1,3]
-    u = ci[2,3]
-    
-    lines(mois,exp(predict(expfit))-exp(l),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
-    lines(mois,exp(predict(expfit))+exp(u),type="l",col="black", ylab="gas prod", xlab="mois", main=paste("Régression exponentielle d'une courbe \n de qualité bad avec k0 =",k0start,"et k1 =",k1start),ylim=c(0,max(exp(predict(expfit)))+10))
-    
+    lines(mois,epredG[,2],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
+    lines(mois,epredG[,3],type="l",col="black",ylim=c(0,max(exp(predict(expfit)))+10))
   }
 }
-
-ci
 
 
 #4) Suggestions sur 5 courbes mal classées
@@ -416,7 +360,6 @@ ci
 k0s <- numeric(75)
 k1s <- numeric(75)
 colors <- numeric(75)
-
 par(mfrow=c(1,1))
 r2e1 <- numeric(1)
 for (i in seq2){
@@ -446,7 +389,6 @@ for (i in seq2){
   k1s[i] = k1i
   colors[i] = col
   
-  
   # tracé de la figure 1 : les données de production 
   if (i==1){
     plot(mois,exp(predict(expfit)),type="l",col=col, ylab="gas prod",
@@ -457,8 +399,8 @@ for (i in seq2){
   }
 }
 
-
 kcoefs <- c()
+#kcoefs$name <- names
 kcoefs$k0 <- k0s
 kcoefs$k1 <- k1s
 kcoefs$col <- colors
@@ -466,27 +408,57 @@ kcoefs$col <- colors
 clustering <- multinom(col ~ k0 + k1, data = kcoefs)
 summary(clustering)
 
-plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
-lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+names = character(75)
+names <- lapply(datapuits$V1, as.character)
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
+
 
 kcoefs$colPred <- clustering$lev[predict(clustering)]
+kcoefs$names <- names
+
 # On a 16 courbes mal prédites. On en sélectionne 5.
 badClass=c()
-
 # Courbe n°75
-badClass=c(badClass, which(kcoefs$k0 > 145 & kcoefs$k0 < 150))
+badClass=c(badClass, which(kcoefs$names == "Well-288"))#OK
+# Courbe n°30
+badClass=c(badClass, which(kcoefs$names == "Well-280"))#OK
+# Courbe n°47
+badClass=c(badClass, which(kcoefs$names == "Well-333"))#OK
+# Courbe n°53
+badClass=c(badClass, which(kcoefs$names == "Well-257"))#OK
+# Courbe n°45
+badClass=c(badClass, which(kcoefs$names == "Well-287"))#OK
+
+# Courbe n°20
+badClass=c(badClass, which(kcoefs$names == "Well-308"))
+# Courbe n°11
+badClass=c(badClass, which(kcoefs$names == "Well-258"))
+
 
 # Courbe n°61
-badClass=c(badClass, which(kcoefs$k0 > 175 & kcoefs$k0 < 190 & kcoefs$k1 > 0.06 & kcoefs$k1 < 0.07))
+badClass=c(badClass, which(kcoefs$names == "Well-290"))
+# Courbe n°21
+badClass=c(badClass, which(kcoefs$names == "Well-248"))
+# Courbe n°48
+badClass=c(badClass, which(kcoefs$names == "Well-305"))
+# Courbe n°39
+badClass=c(badClass, which(kcoefs$names == "Well-246"))
+# Courbe n°59
+badClass=c(badClass, which(kcoefs$names == "Well-319"))
+# Courbe n°50
+badClass=c(badClass, which(kcoefs$names == "Well-328"))
+# Courbe n°57
+badClass=c(badClass, which(kcoefs$names == "Well-250"))
+# Courbe n°38
+badClass=c(badClass, which(kcoefs$names == "Well-312"))
+# Courbe n°71
+badClass=c(badClass, which(kcoefs$names == "Well-301"))
 
-# Courbe n°47
-badClass=c(badClass, which(kcoefs$k0 > 109 & kcoefs$k0 < 113 & kcoefs$k1 > 0.02 & kcoefs$k1 < 0.025))
 
-# Courbe n°53
-badClass=c(badClass, which(kcoefs$k0 > 150 & kcoefs$k0 < 175 & kcoefs$k1 < 0.02))
 
-# Courbe n°35
-badClass=c(badClass, which(kcoefs$k0 > 99 & kcoefs$k0 < 105 & kcoefs$k1 > 0.026 & kcoefs$k1 > 0.03))
 
 # On change les valeurs données par les experts pour les données mal prédites
 for(i in seq2){
@@ -531,7 +503,6 @@ for(i in seq2){
   colors[i] = col
   
   rsquared = summary(expfit)$adj.r.squared
-  print (rsquared)
   r2e1=r2e1+summary(expfit)$adj.r.squared
 }
 
@@ -546,8 +517,11 @@ kcoefs$col <- colors
 clustering <- multinom(col ~ k0 + k1, data = kcoefs)
 summary(clustering)
 
-plot(kcoefs$k0,kcoefs$k1,type="p",pch=15,col=kcoefs$col,main="k1 en fonction de k0")
-lines(kcoefs$k0,kcoefs$k1,type="p",pch=7,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+kcoefs$names <- names
+
+plot(kcoefs$k0,kcoefs$k1,type="p",pch=1,cex=2, lwd = 2,col=kcoefs$col, main="k1 en fonction de k0")
+lines(kcoefs$k0,kcoefs$k1,type="p",pch=19,cex=1,col=clustering$lev[predict(clustering)],main="k1 en fonction de k0")
+text(kcoefs$k0, kcoefs$k1, labels=names, cex= 0.7, pos=3)
 
 
 
@@ -597,6 +571,7 @@ for (i in seq2){
   r2p3=r2p3+summary(fit3)$adj.r.squared
 }
 
+#moyenne du rsquared
 r2p3=r2p3/i
 r2p3
 
@@ -644,8 +619,10 @@ for (i in seq2){
   r2e3=r2e3+summary(expfit)$adj.r.squared
 }
 
+#moyenne du rsquared
 r2e3=r2e3/i
 r2e3
+
 
 ###################################
 ##      FONCTION LIBRAIRIES      ##
